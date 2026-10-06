@@ -1,0 +1,17 @@
+.deals-card {
+  margin-top: 70px;
+}
+
+.heding-deals {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 60px;
+  gap: 12px;
+  font-size: 25px;
+  color: green;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  text-align: center;
+
+}

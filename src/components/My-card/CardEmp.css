@@ -1,0 +1,145 @@
+* {
+  box-sizing: border-box;
+}
+
+.cart-container {
+  width: calc(100% - 44px);
+  min-height: 440px;
+  margin: 20px auto;
+  padding: 30px 26px;
+  border: 1px solid #e1e1e1;
+  border-radius: 15px;
+  background: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.cart-container h2 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 400;
+  color: #050505;
+}
+
+/* Empty Cart */
+.empty-cart {
+  min-height: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-top: -5px;
+}
+
+.cart-icon {
+  font-size: 55px !important;
+  color: #008c12;
+  margin-bottom: 10px;
+}
+
+.empty-cart h3 {
+  margin: 0 0 12px;
+  font-size: 30px;
+  font-weight: 500;
+  color: #050505;
+}
+
+.empty-cart p {
+  margin: 0 0 25px;
+  font-size: 22px;
+  color: #777;
+  font-weight: 400;
+}
+
+.shopping-btn {
+  border: none;
+  outline: none;
+  background: #008c12;
+  color: #fff;
+  padding: 15px 18px;
+  border-radius: 7px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.shopping-btn:hover {
+  background: #006f0e;
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 768px) {
+  .cart-container {
+    width: calc(100% - 30px);
+    min-height: 400px;
+    padding: 25px 20px;
+  }
+
+  .cart-container h2 {
+    font-size: 26px;
+  }
+
+  .empty-cart {
+    min-height: 315px;
+  }
+
+  .empty-cart h3 {
+    font-size: 26px;
+  }
+
+  .empty-cart p {
+    font-size: 18px;
+  }
+
+  .shopping-btn {
+    font-size: 18px;
+    padding: 13px 17px;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 576px) {
+  .cart-container {
+    width: calc(100% - 20px);
+    min-height: 430px;
+    margin: 10px auto;
+    padding: 22px 15px;
+    border-radius: 12px;
+  }
+
+  .cart-container h2 {
+    font-size: 24px;
+  }
+
+  .empty-cart {
+    min-height: 340px;
+    padding: 0 10px;
+  }
+
+  .cart-icon {
+    font-size: 48px !important;
+  }
+
+  .empty-cart h3 {
+    font-size: 23px;
+    margin-bottom: 10px;
+  }
+
+  .empty-cart p {
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 22px;
+  }
+
+  .shopping-btn {
+    font-size: 16px;
+    padding: 12px 16px;
+    text-decoration: none;
+  }
+}

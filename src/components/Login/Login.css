@@ -1,0 +1,445 @@
+/* =========================
+   LOGIN DRAWER
+========================= */
+
+.login-drawer .MuiDrawer-paper {
+  width: 34%;
+  min-width: 500px;
+  max-width: 600px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+
+/* =========================
+   MAIN CONTAINER
+========================= */
+
+.login-container {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  background: #fff;
+  padding: 22px 4%;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* =========================
+   CLOSE BUTTON
+========================= */
+
+.login-close-btn {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #fff;
+  border: 1px solid #d9f1e1;
+  border-radius: 5px;
+
+  cursor: pointer;
+
+  color: #159447;
+
+  margin-bottom: 8px;
+}
+
+.login-close-btn svg {
+  font-size: 25px;
+  font-weight: 300;
+}
+
+.login-close-btn:hover {
+  background: #f0fff5;
+}
+
+
+/* =========================
+   LOGO
+========================= */
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-top: 4px;
+  margin-bottom: 42px;
+}
+
+.logo-circle {
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #078b2d;
+  color: white;
+
+  font-size: 21px;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.logo-text span {
+  font-size: 12px;
+  color: #4a965f;
+}
+
+.logo-text strong {
+  font-size: 13px;
+  color: #087e29;
+  font-weight: 700;
+}
+
+
+/* =========================
+   HEADING
+========================= */
+
+.login-container h2 {
+  margin: 0 0 48px;
+
+  font-size: 28px;
+  font-weight: 500;
+  text-align: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #008b08;
+}
+
+
+/* =========================
+   FORM
+========================= */
+
+.login-form {
+  width: 90%;
+  margin: 0 auto;
+}
+
+.login-form label {
+  display: block;
+
+  font-size: 17px;
+  font-weight: 500;
+
+  color: #111;
+
+  margin-bottom: 13px;
+}
+
+.login-form input {
+  width: 100%;
+  height: 55px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d9f1e1;
+  border-radius: 7px;
+
+  outline: none;
+
+  padding: 0 18px;
+
+  font-size: 16px;
+
+  color: #222;
+
+  background: #fff;
+
+  margin-bottom: 28px;
+}
+
+.login-form input::placeholder {
+  color: #9ba5b5;
+}
+
+.login-form input:focus {
+  border-color: #0a8f28;
+}
+
+
+/* =========================
+   PASSWORD
+========================= */
+
+.password-box {
+  position: relative;
+  width: 100%;
+}
+
+.password-box input {
+  padding-right: 55px;
+  margin-bottom: 0;
+}
+
+.password-box button {
+  position: absolute;
+
+  right: 12px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  border: none;
+  background: transparent;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #111;
+}
+
+.password-box button svg {
+  font-size: 24px;
+}
+
+
+/* =========================
+   FORGOT PASSWORD
+========================= */
+
+.forgot-password {
+  display: flex;
+  justify-content: flex-end;
+
+  margin-top: 23px;
+  margin-bottom: 47px;
+}
+
+.forgot-password button {
+  border: none;
+  background: transparent;
+
+  font-size: 18px;
+  font-weight: 500;
+
+  color: #111;
+
+  cursor: pointer;
+}
+
+
+/* =========================
+   LOGIN BUTTON
+========================= */
+
+.login-btn {
+  width: 100%;
+  height: 55px;
+
+  border: none;
+  border-radius: 7px;
+
+  background: #008b08;
+  color: #fff;
+
+  font-size: 20px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.login-btn:hover {
+  background: #007507;
+}
+
+
+/* =========================
+   OTP BUTTON
+========================= */
+
+.otp-btn {
+  width: 100%;
+  height: 50px;
+
+  margin-top: 21px;
+
+  border: 1px solid #008b08;
+  border-radius: 7px;
+
+  background: #fff;
+  color: #008b08;
+
+  font-size: 19px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.otp-btn:hover {
+  background: #f1fff3;
+}
+
+
+/* =========================
+   BOTTOM LOGO
+========================= */
+
+.login-bottom {
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 76px;
+
+  background: #fafafa;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  color: #222;
+}
+
+.login-bottom span {
+  font-family: Georgia, serif;
+  font-size: 25px;
+}
+
+.login-bottom small {
+  font-family: Georgia, serif;
+  font-size: 10px;
+
+  margin-top: 20px;
+}
+
+.Sign-up {
+  text-align: center;
+}
+
+.Sign-up a {
+  text-decoration: none;
+  color: #008b08;
+}
+
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 900px) {
+
+  .login-drawer .MuiDrawer-paper {
+    width: 55%;
+    min-width: 430px;
+  }
+
+  .login-container {
+    padding: 20px 5%;
+  }
+
+  .login-logo {
+    margin-bottom: 35px;
+  }
+
+  .login-container h2 {
+    font-size: 26px;
+    margin-bottom: 40px;
+  }
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 576px) {
+
+  .login-drawer .MuiDrawer-paper {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .login-container {
+    padding: 18px 22px 90px;
+  }
+
+  .login-close-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .login-logo {
+    margin-top: 5px;
+    margin-bottom: 35px;
+  }
+
+  .logo-circle {
+    width: 31px;
+    height: 31px;
+  }
+
+  .logo-text span {
+    font-size: 10px;
+  }
+
+  .logo-text strong {
+    font-size: 11px;
+  }
+
+  .login-container h2 {
+    font-size: 24px;
+    margin-bottom: 35px;
+  }
+
+  .login-form label {
+    font-size: 16px;
+  }
+
+  .login-form input {
+    height: 52px;
+    font-size: 15px;
+  }
+
+  .forgot-password {
+    margin-top: 18px;
+    margin-bottom: 35px;
+  }
+
+  .forgot-password button {
+    font-size: 16px;
+  }
+
+  .login-btn {
+    height: 58px;
+    font-size: 21px;
+  }
+
+  .otp-btn {
+    height: 58px;
+    font-size: 20px;
+  }
+
+  .login-bottom {
+    height: 68px;
+  }
+
+  .login-bottom span {
+    font-size: 22px;
+  }
+}

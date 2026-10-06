@@ -1,0 +1,313 @@
+.mycard-container {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px;
+  gap: 15px;
+}
+
+.mycard-box {
+  border: 1px solid #e5e7eb;
+  width: 24%;
+  padding: 20px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+}
+
+.topImg img {
+  width: 100%;
+  height: 150px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.mycard-conten {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.describ-box {
+  flex: 1;
+}
+
+.describ-box h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  color: #222;
+}
+
+.describ-box p {
+  margin: 8px 2px;
+  color: #666;
+  font-size: 11px;
+}
+
+.describ-box span {
+  padding-left: 10px;
+  font-weight: 600;
+  color: #222;
+}
+
+.price-cd p {
+  text-align: end;
+  font-size: 18px;
+}
+
+.price-cd span {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.remove-cart-btn {
+  margin-top: 12px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  background: #dc3545;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.remove-cart-btn:hover {
+  background: #b02a37;
+}
+
+.cart-total {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 5px 30px;
+
+  z-index: 1000;
+  box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.25);
+
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.cart-total h2 {
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+
+  color: #198754;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* border: 1px solid gray; */
+  border-radius: 8px;
+  width: 160px;
+}
+
+/* ================================
+   TABLET
+================================ */
+
+@media (max-width: 1024px) {
+  .mycard-container {
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .mycard-box {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 16px;
+  }
+
+  .topImg img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+  }
+
+  .describ-box h3 {
+    font-size: 19px;
+  }
+
+  .describ-box p {
+    font-size: 12px;
+  }
+
+  .price-cd p {
+    font-size: 17px;
+  }
+
+  .price-cd span {
+    font-size: 19px;
+  }
+}
+
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 600px) {
+  .mycard-container {
+    width: 100%;
+    padding: 12px;
+    padding-bottom: 90px;
+    box-sizing: border-box;
+
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+
+  .mycard-box {
+    width: 100%;
+    display: flex;
+  }
+
+  .topImg {
+    width: 50%;
+    padding-right: 10px;
+  }
+
+  .mycard-conten {
+    display: block;
+    width: 50%;
+  }
+
+  .topImg img {
+    width: 100%;
+    height: 200px;
+
+    object-fit: contain;
+
+    border-radius: 10px;
+  }
+
+
+
+  .describ-box {
+    width: 100%;
+  }
+
+  .describ-box h3 {
+    font-size: 15px;
+  }
+
+  .describ-box p {
+    margin: 7px 0;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .describ-box span {
+    padding-left: 5px;
+  }
+
+  .price-cd {
+    margin-top: 10px;
+  }
+
+  .price-cd p {
+    text-align: left;
+    font-size: 14px;
+  }
+
+  .price-cd span {
+    font-size: 16px;
+  }
+
+  .remove-cart-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+  }
+
+  /* Bottom total bar */
+  .cart-total {
+    width: 100%;
+    left: 0;
+    bottom: 0;
+
+    box-sizing: border-box;
+
+    padding: 8px 15px;
+
+    justify-content: center;
+
+    background: #fff;
+
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.18);
+  }
+
+  .cart-total h2 {
+    width: auto;
+    min-width: 180px;
+
+    margin: 0;
+
+    font-size: 17px;
+  }
+}
+
+
+/* ================================
+   SMALL MOBILE
+================================ */
+
+@media (max-width: 380px) {
+  .mycard-container {
+    padding: 10px;
+    padding-bottom: 85px;
+    gap: 15px;
+  }
+
+
+
+  .mycard-box {
+    padding: 12px;
+  }
+
+  .topImg img {
+    height: 170px;
+  }
+
+  .describ-box h3 {
+    font-size: 12px;
+  }
+
+  .describ-box p {
+    font-size: 8px;
+  }
+
+  .price-cd p {
+    font-size: 10px;
+  }
+
+  .price-cd span {
+    font-size: 14px;
+  }
+
+  .remove-cart-btn {
+    font-size: 12px;
+    padding: 7px;
+  }
+
+  .cart-total {
+    padding: 7px 10px;
+  }
+
+  .cart-total h2 {
+    font-size: 16px;
+  }
+}

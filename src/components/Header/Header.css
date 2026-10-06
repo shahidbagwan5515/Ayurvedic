@@ -1,0 +1,688 @@
+.navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.rightNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 80px;
+}
+
+.suport-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.suport-content p {
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  font-weight: 300;
+  color: gray;
+}
+
+.suport-content span {
+
+  font-weight: 700;
+  color: #202020e1;
+}
+
+.suport-icons {
+  background-color: #1f7e054b;
+  padding: 7px;
+  color: #1f7e05;
+  border-radius: 8px;
+}
+
+
+
+.leftNav h2 {
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  font-weight: 500;
+  color: #1f7e05;
+
+}
+
+.leftNav a {
+  text-decoration: none;
+}
+
+.rightNav button {
+  text-transform: capitalize;
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  padding: 10px 5;
+}
+
+.rightNav button:hover {
+  background-color: #1f7e05;
+  color: white;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.header {
+  min-height: 72px !important;
+  padding: 0 40px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1f7e05;
+  color: #ffffff;
+}
+
+/* =========================
+   LEFT SECTION
+========================= */
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-width: 260px;
+}
+
+.header-left a {
+  text-decoration: none;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.icons-left a {
+  text-decoration: none;
+}
+
+.header-left a:hover {
+  color: #ffffffaf;
+}
+
+.menu-btn {
+  color: #ffffff !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  padding: 8px 4px !important;
+}
+
+/* =========================
+   CENTER SEARCH
+========================= */
+
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 30px;
+}
+
+.search-box {
+  width: 100%;
+  max-width: 500px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 15px;
+
+  background: #f6f7f7;
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
+
+  transition: all 0.2s ease;
+}
+
+.search-box:focus-within {
+  border-color: #198754;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.08);
+}
+
+.search-icon {
+  color: #777;
+  margin-right: 10px;
+  font-size: 22px !important;
+}
+
+.search-box .MuiInputBase-root {
+  width: 100%;
+  font-size: 14px;
+}
+
+.search-box input {
+  width: 100%;
+}
+
+.search-box input::placeholder {
+  color: #999;
+  opacity: 1;
+}
+
+/* =========================
+   RIGHT SECTION
+========================= */
+
+.header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 260px;
+}
+
+.icons-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icons-left .MuiIconButton-root {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 8px 10px;
+  color: white;
+
+  border-radius: 8px;
+
+  transition: all 0.2s ease;
+}
+
+.icons-left .MuiIconButton-root:hover {
+  color: #ffffffaf;
+}
+
+.icons-left .MuiSvgIcon-root {
+  font-size: 22px;
+}
+
+.icons-left span {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* =========================
+   CART / WISHLIST BADGE
+========================= */
+
+.icons-left .MuiBadge-badge {
+  min-width: 16px;
+  height: 16px;
+
+  padding: 0 4px;
+
+  font-size: 9px;
+  font-weight: 600;
+
+  /* border: 2px solid #fff; */
+}
+
+/* =========================
+   SIDEBAR BUTTON
+========================= */
+
+.sidebar-btn {
+  display: none;
+}
+
+.sidebar-btn .MuiIconButton-root {
+  color: #222;
+}
+
+/* =========================
+   MUI APP BAR
+========================= */
+
+.MuiAppBar-root {
+  background: #fff !important;
+  color: #222 !important;
+
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* =========================
+   MUI MENU
+========================= */
+
+.MuiMenu-paper {
+  margin-top: 8px;
+  min-width: 210px;
+
+  border-radius: 10px !important;
+
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+.MuiMenuItem-root {
+  font-size: 14px !important;
+  padding: 10px 16px !important;
+}
+
+.MuiMenuItem-root:hover {
+  background: #f2faf6 !important;
+  color: #198754;
+}
+
+.MuiMenuItem-root a {
+  color: inherit;
+}
+
+/* =========================
+   MUI MENU
+========================= */
+
+.MuiMenu-paper {
+  margin-top: 8px !important;
+
+  /* Menu width = 80% of viewport */
+  width: 80vw !important;
+  max-width: 900px !important;
+  min-width: 280px !important;
+
+  border-radius: 12px !important;
+
+  background: #ffffff !important;
+
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15) !important;
+
+  border: 1px solid #eeeeee;
+}
+
+/* Menu items */
+.MuiMenu-list {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px !important;
+}
+
+.MuiMenuItem-root {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  padding: 13px 18px !important;
+  min-height: 48px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.MuiMenuItem-root:hover {
+  background: #f2faf6 !important;
+  color: #198754 !important;
+}
+
+.MuiMenuItem-root a {
+  color: inherit !important;
+  text-decoration: none !important;
+  width: 100%;
+}
+
+
+/* =========================
+   MOBILE DRAWER
+========================= */
+
+.mobile-drawer {
+  width: 100%;
+
+  max-width: 100%;
+  background: #fff;
+}
+
+/* =========================
+   DRAWER HEADER
+========================= */
+
+.drawer-header {
+  height: 80px;
+  padding: 0 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid #eeeeee;
+}
+
+.drawer-header h3 {
+  margin: 0;
+
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+}
+
+.drawer-header .MuiIconButton-root {
+  color: #333;
+}
+
+/* =========================
+   MENU LIST
+========================= */
+
+.mobile-menu-list {
+  padding: 0 !important;
+}
+
+/* Normal menu item */
+
+.mobile-menu-list>.MuiListItem-root {
+  min-height: 48px;
+
+  padding: 0 16px !important;
+
+  display: flex;
+  align-items: center;
+
+  border-bottom: 1px solid #eeeeee;
+}
+
+/* Shop / Deals / Contact */
+
+.mobile-menu-list>.MuiListItem-root:not(:has(.MuiIconButton-root)) {
+  font-size: 15px;
+  font-weight: 500;
+  color: #222;
+}
+
+/* =========================
+   ICON ITEMS
+========================= */
+
+.mobile-menu-list .MuiListItem-root:has(.MuiIconButton-root) {
+  padding: 0 10px !important;
+}
+
+.mobile-menu-list .MuiIconButton-root {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  gap: 10px;
+
+  padding: 10px 8px;
+
+  color: #333;
+  border-radius: 8px;
+}
+
+.mobile-menu-list .MuiIconButton-root:hover {
+  background: #f2faf6;
+  color: #198754;
+}
+
+.mobile-menu-list .MuiIconButton-root .MuiSvgIcon-root {
+  font-size: 22px;
+}
+
+.mobile-menu-list .MuiIconButton-root span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* =========================
+   BADGES
+========================= */
+
+.mobile-menu-list .MuiBadge-badge {
+  min-width: 16px;
+  height: 16px;
+
+  font-size: 9px;
+
+  border: 2px solid #fff;
+}
+
+/* =========================
+   HOVER
+========================= */
+
+.mobile-menu-list>.MuiListItem-root:hover {
+  background: #f8fcfa;
+  color: #198754;
+}
+
+/* =========================
+   SECOND LIST
+========================= */
+
+.mobile-drawer>.MuiList:last-child {
+  padding: 0 !important;
+}
+
+.mobile-drawer>.MuiList:last-child .MuiListItemButton-root {
+  min-height: 48px;
+  padding: 0 16px;
+
+  border-bottom: 1px solid #eeeeee;
+}
+
+.mobile-drawer>.MuiList:last-child .MuiListItemText-primary {
+  font-size: 15px;
+  font-weight: 500;
+  padding: 30px;
+}
+
+.MuiBackdrop-root {
+  transition: opacity 300ms ease-in-out !important;
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 1100px) {
+  .header {
+    padding: 0 25px !important;
+  }
+
+  .header-left {
+    gap: 18px;
+    min-width: auto;
+  }
+
+  .header-center {
+    padding: 0 20px;
+  }
+
+  .header-right {
+    min-width: auto;
+  }
+
+  .icons-left {
+    gap: 2px;
+  }
+
+  .icons-left span {
+    font-size: 12px;
+  }
+
+  .icons-left .MuiIconButton-root {
+    padding: 7px;
+  }
+
+  .rightNav {
+    gap: 50px;
+  }
+}
+
+
+/* =========================
+   MOBILE / SMALL TABLET
+========================= */
+
+@media (max-width: 768px) {
+  .header {
+    min-height: 65px !important;
+    padding: 0 15px !important;
+  }
+
+  /* Hide desktop navigation */
+  .header-left {
+    display: none;
+  }
+
+  /* Search takes available space */
+  .header-center {
+    flex: 1;
+    padding: 0 10px 0 0;
+  }
+
+  .search-box {
+    height: 40px;
+    max-width: none;
+    padding: 0 10px;
+  }
+
+  .search-icon {
+    font-size: 20px !important;
+    margin-right: 6px;
+  }
+
+  .search-box .MuiInputBase-root {
+    font-size: 13px;
+  }
+
+  .icons-left {
+    display: none;
+  }
+
+  /* Hide text labels */
+  .icons-left span {
+    display: none;
+  }
+
+  .icons-left {
+    gap: 0;
+  }
+
+  .icons-left .MuiIconButton-root {
+    padding: 7px;
+  }
+
+  .icons-left .MuiSvgIcon-root {
+    font-size: 21px;
+  }
+
+  .sidebar-btn {
+    display: block;
+  }
+
+  .sidebar-btn .MuiIconButton-root {
+    margin-right: 0 !important;
+    margin-left: 8px;
+  }
+
+  .MuiMenu-paper {
+    width: 92vw !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    border-radius: 10px !important;
+  }
+
+  .MuiMenu-list {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    padding: 10px !important;
+  }
+
+  .MuiMenuItem-root {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    padding: 11px 8px !important;
+    min-height: 45px !important;
+    justify-content: center !important;
+    text-align: center !important;
+    border-radius: 7px !important;
+  }
+
+  .MuiMenuItem-root a {
+    width: 100%;
+    text-align: center;
+  }
+
+  .suport-center {
+    display: none;
+  }
+}
+
+
+/* =========================
+   VERY SMALL MOBILE
+========================= */
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0 10px !important;
+  }
+
+  .header-center {
+    padding-right: 5px;
+  }
+
+  .search-box {
+    height: 38px;
+  }
+
+  .search-box input::placeholder {
+    font-size: 11px;
+  }
+
+
+
+  .sidebar-btn .MuiIconButton-root {
+    padding: 8px;
+  }
+
+  .MuiMenu-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+  }
+
+  .MuiMenuItem-root {
+    font-size: 12px !important;
+    padding: 10px 6px !important;
+  }
+
+  .mobile-drawer {
+    height: 100vh;
+    width: auto;
+  }
+
+  .drawer-header {
+    height: 60px;
+  }
+
+  .drawer-header h3 {
+    font-size: 17px;
+  }
+
+  .mobile-menu-list .MuiListItemText-primary {
+    font-size: 13px;
+  }
+
+  .navbar-container {
+    padding: 7;
+  }
+
+  .rightNav button {
+    display: none;
+  }
+
+  .leftNav h2 {
+    font-size: 16px;
+
+  }
+}
