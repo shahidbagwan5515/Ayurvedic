@@ -9,13 +9,13 @@ import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined
 import Login from "../Login/Login";
 import "./MenuFooter.css";
 
-function MenuFooter({ cartItems }) {
+function MenuFooter({ cartItems = [] }) {
   const [loginOpen, setLoginOpen] = React.useState(false);
 
   return (
     <>
-      <div className="mobile-menu-footer">
-        {/* Home */}
+      <nav className="mobile-menu-footer">
+        {/* HOME */}
         <NavLink
           to="/"
           className={({ isActive }) =>
@@ -26,37 +26,38 @@ function MenuFooter({ cartItems }) {
           <span>Home</span>
         </NavLink>
 
-        {/* Wishlist */}
+        {/* WISHLIST */}
         <NavLink
           to="/wishlist"
           className={({ isActive }) =>
-            `mobile-menu-item menu-badge-item ${isActive ? "active-menu" : ""}`
+            `mobile-menu-item ${isActive ? "active-menu" : ""}`
           }
         >
-          <div className="menu-icon-wrapper">
-            <FavoriteBorderOutlinedIcon />
-          </div>
-
+          <FavoriteBorderOutlinedIcon />
           <span>Wishlist</span>
         </NavLink>
 
-        {/* Cart */}
+        {/* CART */}
         <NavLink
           to="/MyCard"
           className={({ isActive }) =>
-            `mobile-menu-item menu-badge-item ${isActive ? "active-menu" : ""}`
+            `mobile-menu-item ${isActive ? "active-menu" : ""}`
           }
         >
           <div className="menu-icon-wrapper">
             <ShoppingCartOutlinedIcon />
 
-            <span className="menu-badge">{cartItems?.length || 0}</span>
+            {cartItems.length > 0 && (
+              <span className="menu-badge">
+                {cartItems.length > 99 ? "99+" : cartItems.length}
+              </span>
+            )}
           </div>
 
           <span>My Cart</span>
         </NavLink>
 
-        {/* Login */}
+        {/* LOGIN */}
         <button
           type="button"
           className="mobile-menu-item login-menu-button"
@@ -65,9 +66,9 @@ function MenuFooter({ cartItems }) {
           <PersonOutlineOutlinedIcon />
           <span>Login</span>
         </button>
-      </div>
+      </nav>
 
-      {/* Login Drawer */}
+      {/* LOGIN DRAWER */}
       <Login open={loginOpen} onClose={() => setLoginOpen(false)} />
     </>
   );

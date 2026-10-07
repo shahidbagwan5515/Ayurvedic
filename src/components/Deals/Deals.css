@@ -5,13 +5,320 @@
 .heding-deals {
   width: 100%;
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding-left: 60px;
+  align-content: center;
+  justify-content: space-between;
+  padding: 13px;
   gap: 12px;
   font-size: 25px;
   color: green;
   font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-  text-align: center;
 
+}
+
+.heding-deals p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.rightErro {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  gap: 12px;
+}
+
+.east-icon {
+  color: green;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+.east-icon:hover {
+
+  border: 1px solid green;
+  padding: 2px;
+}
+
+/* /--------------/ */
+/* =========================
+   IMMUNITY BOOSTERS
+========================= */
+
+.Immunity-box {
+  width: 100%;
+  background: #f8f8f8;
+  padding: 48px 3%;
+  margin-top: 30px;
+}
+
+/* =========================
+   HEADING
+========================= */
+
+.immunity-heading {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.immunity-title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+
+}
+
+.immunity-title img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.immunity-title h2 {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 500;
+  color: #111;
+}
+
+.immunity-view {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: green;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.immunity-view svg {
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  border: 1px solid #d8eee1;
+  border-radius: 9px;
+}
+
+/* =========================
+   PRODUCTS
+========================= */
+
+.immunity-products {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 70px;
+  row-gap: 25px;
+}
+
+.immunity-product {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.immunity-product:hover {
+  transform: translateY(-3px);
+}
+
+.immunity-image {
+  width: 150px;
+  height: 150px;
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.immunity-image img {
+  width: 85%;
+  height: 85%;
+  object-fit: contain;
+}
+
+.immunity-info {
+  min-width: 0;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+.immunity-info h3 {
+  margin: 0 0 18px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #111;
+  line-height: 1.3;
+}
+
+.immunity-info strong {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+}
+
+/* =========================
+   BOTTOM BANNER
+========================= */
+.bottom-banner {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 45px 2.8%;
+  background: #fff;
+}
+
+.bottom-banner-item {
+  width: 100%;
+  height: 380px;
+  overflow: hidden;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.bottom-banner-item img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+
+
+
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 992px) {
+
+  .Immunity-box {
+    padding: 35px 25px;
+  }
+
+  .immunity-title h2 {
+    font-size: 28px;
+  }
+
+  .immunity-products {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+  }
+
+  .immunity-image {
+    width: 120px;
+    height: 120px;
+  }
+
+  .immunity-info h3 {
+    font-size: 17px;
+  }
+
+  .immunity-info strong {
+    font-size: 19px;
+  }
+
+  .bottom-banner {
+    gap: 15px;
+    padding: 35px 20px;
+  }
+
+  .bottom-banner-item {
+    height: 280px;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 576px) {
+
+  .Immunity-box {
+    padding: 25px 15px;
+    margin-top: 20px;
+  }
+
+  .immunity-heading {
+    margin-bottom: 20px;
+  }
+
+  .immunity-title {
+    gap: 8px;
+  }
+
+  .immunity-title img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .immunity-title h2 {
+    font-size: 21px;
+  }
+
+  .immunity-view {
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  .immunity-view svg {
+    width: 34px;
+    height: 34px;
+    padding: 7px;
+  }
+
+  .immunity-products {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .immunity-product {
+    gap: 14px;
+  }
+
+  .immunity-image {
+    width: 105px;
+    height: 105px;
+    border-radius: 12px;
+  }
+
+  .immunity-info h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .immunity-info strong {
+    font-size: 19px;
+  }
+
+  .bottom-banner {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 25px 15px;
+
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .bottom-banner::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bottom-banner-item {
+    min-width: 88%;
+    width: 88%;
+    height: 180px;
+    border-radius: 8px;
+  }
 }

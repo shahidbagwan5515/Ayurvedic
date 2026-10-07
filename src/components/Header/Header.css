@@ -478,6 +478,32 @@
   transition: opacity 300ms ease-in-out !important;
 }
 
+.mobile-menu-list>.MuiListItem-root {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 0 16px;
+  text-decoration: none;
+  color: #333;
+}
+
+.mobile-menu-list>.MuiListItem-root>svg {
+  font-size: 22px;
+  color: #666;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+
+.mobile-menu-list>.MuiListItem-root:hover {
+
+  background: #f1f8f3;
+  color: #198754;
+}
+
+.mobile-menu-list>.MuiListItem-root:hover>svg {
+  color: #198754;
+}
+
 /* =========================
    TABLET
 ========================= */

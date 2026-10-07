@@ -1,9 +1,33 @@
 import { useState } from "react";
 import "./PrdInquary.css";
 
-function PrdInquary({ product, onBack }) {
+function PrdInquary({ product, onBack, onAddToCart }) {
   const [quantity, setQuantity] = useState(1);
   const [size, setSize] = useState(product.sizes?.[0] || "");
+
+  const handleBuyNow = () => {
+    const productToCart = {
+      ...product,
+      quantity: quantity,
+      selectedSize: size,
+    };
+
+    onAddToCart(productToCart);
+
+    alert("Product added successfully!");
+  };
+
+  const handleAddToCart = () => {
+    const productToCart = {
+      ...product,
+      quantity: quantity,
+      selectedSize: size,
+    };
+
+    onAddToCart(productToCart);
+
+    alert("Product added to cart!");
+  };
 
   return (
     <div className="product-detail">
@@ -66,9 +90,13 @@ function PrdInquary({ product, onBack }) {
 
           <p className="stock">✓ In Stock</p>
 
-          <button className="add-cart">Add to Cart</button>
+          <button className="add-cart" onClick={handleAddToCart}>
+            Add to Cart
+          </button>
 
-          <button className="buy-now">Buy Now</button>
+          <button className="buy-now" onClick={handleBuyNow}>
+            Buy Now
+          </button>
         </div>
       </div>
     </div>

@@ -28,7 +28,9 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Login from "../Login/Login";
-
+import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import ContactSupportOutlinedIcon from "@mui/icons-material/ContactSupportOutlined";
 function Header({ cartItems }) {
   const id = React.useId();
 
@@ -280,35 +282,66 @@ function Header({ cartItems }) {
           <Divider />
 
           <List className="mobile-menu-list">
-            <ListItem>Home</ListItem>
+            {/* Home */}
+            <ListItem component={Link} to="/Home" onClick={toggleDrawer(false)}>
+              <HomeOutlinedIcon />
+              <span>Home</span>
+            </ListItem>
 
-            <ListItem>Deals</ListItem>
+            {/* Deals */}
+            <ListItem
+              component={Link}
+              to="/deals"
+              onClick={toggleDrawer(false)}
+            >
+              <LocalOfferOutlinedIcon />
+              <span>Deals</span>
+            </ListItem>
 
-            <ListItem>Contact Us</ListItem>
+            {/* Contact Us */}
+            <ListItem
+              component={Link}
+              to="/Contact"
+              onClick={toggleDrawer(false)}
+            >
+              <ContactSupportOutlinedIcon />
+              <span>Contact Us</span>
+            </ListItem>
 
             {/* Wishlist */}
             <ListItem>
-              <IconButton aria-label="wishlist">
-                <FavoriteBorderIcon fontSize="small" />
-
+              <IconButton
+                component={Link}
+                to="/wishlist"
+                onClick={toggleDrawer(false)}
+              >
+                <FavoriteBorderIcon />
                 <span>Wishlist</span>
               </IconButton>
             </ListItem>
 
             {/* Cart */}
             <ListItem>
-              <IconButton aria-label="cart">
+              <IconButton
+                component={Link}
+                to="/Mycard"
+                onClick={toggleDrawer(false)}
+              >
                 <ShoppingCartIcon fontSize="small" />
-
                 <span>My Cart</span>
               </IconButton>
             </ListItem>
 
             {/* Login */}
             <ListItem>
-              <IconButton aria-label="login">
+              <IconButton
+                aria-label="login"
+                onClick={() => {
+                  setDrawerOpen(false);
+                  setLoginOpen(true);
+                }}
+              >
                 <PersonOutlinedIcon fontSize="small" />
-
                 <span>Login</span>
               </IconButton>
             </ListItem>

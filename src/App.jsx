@@ -8,6 +8,8 @@ import MenuFooter from "./components/Menufooter/MenuFooter";
 import Login from "./components/Login/Login";
 import Deals from "./components/Deals/Deals";
 import CardEmp from "./components/My-card/CardEmp";
+import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
+import Contact from "./components/Contact/Contact";
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -22,6 +24,7 @@ function App() {
   };
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Header cartItems={cartItems} />
 
       <Routes>
@@ -29,9 +32,10 @@ function App() {
         <Route path="/Home" element={<Home onAddToCart={addToCart} />} />
         <Route path="/Login" element={<Login />} />
 
-        <Route path="/deals" element={<Deals />} />
+        <Route path="/deals" element={<Deals onAddToCart={addToCart} />} />
 
-        <Route path="/contact" element={<h1>Contact Us</h1>} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/wishlist" element={<h1>WishList</h1>} />
         <Route path="/CardEmp" element={<CardEmp />} />
         <Route
           path="/Mycard"

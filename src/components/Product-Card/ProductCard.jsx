@@ -104,6 +104,7 @@ function ProductCard({ onAddToCart }) {
       <PrdInquary
         product={selectedProduct}
         onBack={() => setSelectedProduct(null)}
+        onAddToCart={onAddToCart}
       />
     );
   }

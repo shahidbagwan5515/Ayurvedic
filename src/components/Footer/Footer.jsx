@@ -67,7 +67,7 @@ function Footer() {
             <div className="contact-icon">☎</div>
             <div>
               <span>Call Us</span>
-              <p>+91 484 2554021</p>
+              <p>+91 1234567890</p>
             </div>
           </div>
 
@@ -75,7 +75,7 @@ function Footer() {
             <div className="contact-icon">✉</div>
             <div>
               <span>Email Us</span>
-              <p>contact@aryavaidysala.com</p>
+              <p>contact@superadmin.com</p>
             </div>
           </div>
 
