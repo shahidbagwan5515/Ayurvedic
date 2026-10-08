@@ -31,6 +31,7 @@ import Login from "../Login/Login";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import ContactSupportOutlinedIcon from "@mui/icons-material/ContactSupportOutlined";
+import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
 function Header({ cartItems }) {
   const id = React.useId();
 
@@ -128,7 +129,7 @@ function Header({ cartItems }) {
         <div className="rightNav">
           <div className="suport-center">
             <div className="suport-icons">
-              <HeadsetMicIcon />
+              <HeadsetMicOutlinedIcon />
             </div>
 
             <div className="suport-content">
@@ -181,7 +182,7 @@ function Header({ cartItems }) {
                 </MenuItem>
               ))}
             </Menu>
-
+            <Link to="/">Home</Link>
             <Link to="/deals">Deals</Link>
 
             <Link to="/contact">Contact Us</Link>

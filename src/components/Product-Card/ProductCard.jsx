@@ -7,6 +7,8 @@ import cardimg2 from "../../assets/nimbapatradi_churnam.jpg";
 import cardimg3 from "../../assets/shop.jpeg";
 import cardimg4 from "../../assets/psorakot.png";
 
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCartOutlined";
+
 function ProductCard({ onAddToCart }) {
   const products = [
     {
@@ -78,7 +80,6 @@ function ProductCard({ onAddToCart }) {
     }));
   };
 
-  // Buy Now
   const handleBuyNow = (product) => {
     const quantity = quantities[product.id];
 
@@ -89,7 +90,7 @@ function ProductCard({ onAddToCart }) {
     if (confirmBuy) {
       const productToCart = {
         ...product,
-        quantity: quantity,
+        quantity,
         selectedSize: product.sizes[0],
       };
 
@@ -119,6 +120,13 @@ function ProductCard({ onAddToCart }) {
         >
           <div className="product-image">
             <img src={product.image} alt={product.name} />
+
+            <span className="product-offer">
+              {Math.round(
+                ((product.oldPrice - product.price) / product.oldPrice) * 100,
+              )}
+              % OFF
+            </span>
           </div>
 
           <div className="product-content">
@@ -128,10 +136,9 @@ function ProductCard({ onAddToCart }) {
 
             <p className="product-description">{product.description}</p>
 
-            <div className="qntPrice-box">
+            <div className="product-footer">
               <div className="price-wrapper">
                 <span className="product-price">₹{product.price}</span>
-
                 <span className="old-price">₹{product.oldPrice}</span>
               </div>
 
@@ -147,19 +154,15 @@ function ProductCard({ onAddToCart }) {
               </div>
             </div>
 
-            <div
-              className="product-bottom"
-              onClick={(e) => e.stopPropagation()}
+            <button
+              className="buy-now-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleBuyNow(product);
+              }}
             >
-              <button className="add-cart-btn">Add to Cart</button>
-
-              <button
-                className="buy-now-btn"
-                onClick={() => handleBuyNow(product)}
-              >
-                Buy Now
-              </button>
-            </div>
+              Add to Cart <ShoppingCartIcon className="buyIcon-btn" />
+            </button>
           </div>
         </div>
       ))}

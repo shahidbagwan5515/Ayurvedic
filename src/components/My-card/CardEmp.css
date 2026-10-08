@@ -54,7 +54,7 @@
 .shopping-btn {
   border: none;
   outline: none;
-  background: #008c12;
+  background: #075c3d;
   color: #fff;
   padding: 15px 18px;
   border-radius: 7px;
@@ -65,7 +65,7 @@
 }
 
 .shopping-btn:hover {
-  background: #006f0e;
+  background: #075c3d;
 }
 
 /* =========================

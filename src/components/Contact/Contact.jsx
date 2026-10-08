@@ -28,7 +28,7 @@ function Contact() {
         <div className="contact-left">
           {/* Breadcrumb */}
           <div className="contact-breadcrumb">
-            <a href="/Home">Home</a>
+            <a href="/">Home</a>
             <ChevronRightIcon />
             <span>Contact Us</span>
           </div>

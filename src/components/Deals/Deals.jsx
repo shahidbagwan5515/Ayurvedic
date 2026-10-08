@@ -139,7 +139,7 @@ function Deals({ onAddToCart }) {
             <div className="heding-deals">
               <p>
                 <img src={dealsLogo} alt="Ayurvedic" />
-                Offers
+                Customer Favorite
               </p>
 
               <div className="rightErro">
