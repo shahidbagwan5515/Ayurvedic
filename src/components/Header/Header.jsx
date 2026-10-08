@@ -66,7 +66,7 @@ function Header({ cartItems }) {
   };
 
   const menuItems = [
-    { label: "Arishtas and Asavas", link: "/arishtas-and-asavas" },
+    { label: "Arishtas and Asavas", link: "/Category " },
     { label: "Churnams", link: "/churnams" },
     { label: "Ghrithms", link: "/ghrithms" },
     { label: "Immunity Boosters", link: "/immunity-boosters" },
