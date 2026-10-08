@@ -1,9 +1,11 @@
 import React from "react";
 import { useState } from "react";
 import "./Home.css";
-import BannerImg1 from "../../assets/vibha-men-banner.webp";
+import BannerImg1 from "../../assets/website_banners-07.webp";
 import BannerImg2 from "../../assets/tooth_paste.webp";
-import BannerImg3 from "../../assets/website_banners-07.webp";
+import BannerImg3 from "../../assets/vibha-men-banner.webp";
+
+import BannerImg4 from "../../assets/vibha_featured_image.webp";
 import ProductCard from "../Product-Card/ProductCard";
 import ayurLog from "../../assets/ayur-log.svg";
 import Footer from "../Footer/Footer";
@@ -64,6 +66,9 @@ function Home({ onAddToCart }) {
                 />
               ))}
             </div>
+          </div>
+          <div className="banner-right">
+            <img src={BannerImg4} alt="" srcset="" />
           </div>
         </div>
 

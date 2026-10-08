@@ -3,16 +3,36 @@
 ========================= */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 
+.banner-container {
+  display: flex;
+  align-items: top;
+  width: 100%;
+  gap: 16px;
+  background-color: transparent;
+}
+
 .banner-left {
   position: relative;
   overflow: hidden;
-
   height: 440px;
+  width: 70%;
+}
+
+.banner-right {
+  width: 30%;
+  height: 440px;
+}
+
+.banner-right img {
+  width: 100%;
+  height: 440px;
+  border-radius: 20px;
 }
 
 .banner-left img {
   width: 100%;
   height: 100%;
+  border-radius: 20px;
 
   filter: brightness(85%);
   display: block;
@@ -154,9 +174,150 @@
   margin: 0 25px;
 }
 
+/* =========================
+   FEATURED SECTION
+========================= */
+
+.featured-section {
+  width: 100%;
+  padding: 35px 5%;
+  background: #fff;
+  overflow: hidden;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.featured-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.featured-header h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 34px;
+  font-weight: 500;
+  color: #111;
+}
+
+.featured-header h2:first-letter {
+  font-size: 30px;
+}
+
+/* =========================
+   ARROW BUTTONS
+========================= */
+
+.slider-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.slider-buttons button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #d9e5df;
+  background: #fff;
+  color: #00852b;
+  border-radius: 7px;
+  font-size: 25px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.slider-buttons button:hover {
+  background: #00852b;
+  color: #fff;
+}
+
+/* =========================
+   IMAGE SCROLL
+========================= */
+
+.scrolImg-box {
+  width: 100%;
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.scrolImg-box::-webkit-scrollbar {
+  display: none;
+}
+
+/* =========================
+   PRODUCT IMAGE
+========================= */
+
+.scroll-product {
+  flex: 0 0 calc((100% - 72px) / 5);
+  height: 455px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #f5f5f5;
+}
+
+.scroll-product img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.scroll-product:hover img {
+  transform: scale(1.03);
+}
+
+/* =========================
+   DOTS
+========================= */
+
+.slider-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.slider-dots span {
+  width: 7px;
+  height: 7px;
+  background: #ddd;
+  border-radius: 50%;
+}
+
+.slider-dots span.active {
+  width: 23px;
+  border-radius: 10px;
+  background: #888;
+}
+
+
+
 @media (max-width: 768px) {
+
+  .banner-right {
+    display: none;
+  }
+
   .banner-left {
+    width: 100%;
     height: 280px;
+  }
+
+  .banner-left img {
+    border-radius: 8px;
+    background-size: contain;
   }
 
   .secure-box {
@@ -196,7 +357,7 @@
 
   .banner-left img {
     background-position: center;
-    background-size: cover;
+    background-size: contain;
   }
 
   .shoping-producd h1 {
