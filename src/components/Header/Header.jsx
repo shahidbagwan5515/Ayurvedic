@@ -32,6 +32,7 @@ import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import ContactSupportOutlinedIcon from "@mui/icons-material/ContactSupportOutlined";
 import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 function Header({ cartItems }) {
   const id = React.useId();
 
@@ -308,6 +309,12 @@ function Header({ cartItems }) {
             >
               <ContactSupportOutlinedIcon />
               <span>Contact Us</span>
+            </ListItem>
+
+            {/*Blog */}
+            <ListItem component={Link} to="/Blog" onClick={toggleDrawer(false)}>
+              <ArticleOutlinedIcon />
+              <span>Blog</span>
             </ListItem>
 
             {/* Wishlist */}
