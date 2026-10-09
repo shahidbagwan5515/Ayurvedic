@@ -122,7 +122,7 @@ function Header({ cartItems }) {
         <div className="leftNav">
           <Link to="/Home">
             {" "}
-            <h2>Wellcome to Ayurvedic</h2>
+            <h2>Wellcome to Ayurveda</h2>
           </Link>
         </div>
 
@@ -186,6 +186,7 @@ function Header({ cartItems }) {
             <Link to="/deals">Deals</Link>
 
             <Link to="/contact">Contact Us</Link>
+            <Link to="/Blog">Blog</Link>
           </div>
 
           {/* =========================

@@ -11,6 +11,8 @@ import CardEmp from "./components/My-card/CardEmp";
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 import Contact from "./components/Contact/Contact";
 import Category from "./components/ShopNow/Category";
+import Blog from "./components/Blog/Blog";
+import BlogDetails from "./components/Blog/BlogDetails";
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -34,11 +36,14 @@ function App() {
         <Route path="/Login" element={<Login />} />
 
         <Route path="/deals" element={<Deals onAddToCart={addToCart} />} />
-
         <Route path="/contact" element={<Contact />} />
+        <Route path="/Blog" element={<Blog />} />
+
+        <Route path="/blog/:id" element={<BlogDetails />} />
         <Route path="/wishlist" element={<h1>WishList</h1>} />
         <Route path="/CardEmp" element={<CardEmp />} />
         <Route path="/Category" element={<Category />} />
+
         <Route
           path="/Mycard"
           element={<MyCard cartItems={cartItems} onRemove={removeFromCart} />}
