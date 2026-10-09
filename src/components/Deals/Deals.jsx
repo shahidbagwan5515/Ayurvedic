@@ -6,6 +6,7 @@ import PrdInquary from "../DetailsCard/PrdInquary";
 import BannerImg1 from "../../assets/vibha-men-banner.webp";
 import BannerImg2 from "../../assets/tooth_paste.webp";
 import BannerImg3 from "../../assets/website_banners-07.webp";
+import BannerImg4 from "../../assets/vibha_featured_image.webp";
 
 import ProductCard from "../Product-Card/ProductCard";
 import dealsLogo from "../../assets/ayur-log.svg";
@@ -116,10 +117,11 @@ function Deals({ onAddToCart }) {
       ) : (
         <>
           <div className="banner-container">
+            {/* LEFT SLIDER */}
             <div className="banner-box banner-left">
               <img src={banners[activeSlide]} alt="Ayurvedic Product Banner" />
 
-              {/* SLIDER DOTS */}
+              {/* Dots */}
               <div className="slider-dots">
                 {banners.map((_, index) => (
                   <button
@@ -128,13 +130,14 @@ function Deals({ onAddToCart }) {
                       activeSlide === index ? "active" : ""
                     }`}
                     onClick={() => setActiveSlide(index)}
-                    aria-label={`Go to slide ${index + 1}`}
                   />
                 ))}
               </div>
             </div>
+            <div className="banner-right">
+              <img src={BannerImg4} alt="" srcset="" />
+            </div>
           </div>
-
           <div className="deals-card">
             <div className="heding-deals">
               <p>

@@ -244,6 +244,18 @@
 
 @media (max-width: 576px) {
 
+  .heding-deals p {
+    font-size: 13px;
+  }
+
+  .rightErro {
+    font-size: 13px;
+  }
+
+  .east-icon {
+    font-size: 13px !important;
+  }
+
   .Immunity-box {
     padding: 25px 15px;
     margin-top: 20px;

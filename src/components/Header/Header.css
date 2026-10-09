@@ -1,5 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 * {
   box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font-family: inherit;
 }
 
 .navbar-container {
@@ -48,9 +61,12 @@
 
 .leftNav h2 {
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-  font-weight: 500;
-  color: #fff;
-
+  font-weight: 600;
+  background: linear-gradient(90deg, #ffffffe3 0%, #ffffffc0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
 }
 
 .leftNav a {
@@ -66,8 +82,9 @@
 }
 
 .rightNav button:hover {
-  background-color: #1f7e05;
+  background-color: #198754;
   color: white;
+  border: none;
 }
 
 /* =========================

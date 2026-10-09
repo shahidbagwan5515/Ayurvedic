@@ -27,6 +27,7 @@
 .blog-hero-content {
   width: 100%;
   max-width: 650px;
+
 }
 
 .blog-eyebrow {
@@ -62,6 +63,7 @@
   color: #e4efeb;
   font-size: 15px;
   line-height: 1.8;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 
 .blog-explore-btn {
@@ -76,6 +78,7 @@
   font-weight: 700;
   text-decoration: none;
   transition: background 0.3s ease, transform 0.3s ease;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 
 .blog-explore-btn:hover {
@@ -152,6 +155,7 @@
   border-radius: 10px;
   background: #fff;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 
 .blog-card:hover {
@@ -222,9 +226,10 @@
 .blog-card-content h3 {
   margin: 16px 0 10px;
   color: #214735;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.5;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 
 .blog-card-content>p {
@@ -232,6 +237,7 @@
   color: #758078;
   font-size: 13px;
   line-height: 1.8;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 
 .blog-read-more {
@@ -243,6 +249,7 @@
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 
 .blog-card-link {
