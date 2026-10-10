@@ -34,7 +34,7 @@ import ContactSupportOutlinedIcon from "@mui/icons-material/ContactSupportOutlin
 import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
-import Companylog from "../../assets/companyLog.png";
+import Companylog from "../../assets/AjitlabLogo.png";
 function Header({ cartItems }) {
   const id = React.useId();
 
@@ -125,7 +125,6 @@ function Header({ cartItems }) {
         <div className="leftNav">
           <Link to="/Home">
             <img src={Companylog} alt="CompanyLog" className="companyLog" />
-            <h2>VedaRoots Naturals</h2>
           </Link>
         </div>
 
