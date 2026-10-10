@@ -35,6 +35,7 @@ import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import Companylog from "../../assets/AjitlabLogo.png";
+import Companylog2 from "../../assets/navLog.png";
 function Header({ cartItems }) {
   const id = React.useId();
 
@@ -145,6 +146,10 @@ function Header({ cartItems }) {
           <Button variant="outlined" color="success">
             <HealthAndSafetyIcon /> Book an Appointment
           </Button>
+
+          <div className="navRight-Img">
+            <img src={Companylog2} alt="" />
+          </div>
         </div>
       </nav>
       <AppBar position="static">
