@@ -33,6 +33,8 @@ import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import ContactSupportOutlinedIcon from "@mui/icons-material/ContactSupportOutlined";
 import HeadsetMicOutlinedIcon from "@mui/icons-material/HeadsetMicOutlined";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import Companylog from "../../assets/companyLog.png";
 function Header({ cartItems }) {
   const id = React.useId();
 
@@ -122,8 +124,8 @@ function Header({ cartItems }) {
       <nav className="navbar-container">
         <div className="leftNav">
           <Link to="/Home">
-            {" "}
-            <h2>Wellcome to Ayurveda</h2>
+            <img src={Companylog} alt="CompanyLog" className="companyLog" />
+            <h2>VedaRoots Naturals</h2>
           </Link>
         </div>
 
@@ -142,7 +144,7 @@ function Header({ cartItems }) {
             </div>
           </div>
           <Button variant="outlined" color="success">
-            Book an Appointment
+            <HealthAndSafetyIcon /> Book an Appointment
           </Button>
         </div>
       </nav>

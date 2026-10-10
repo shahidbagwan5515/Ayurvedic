@@ -90,7 +90,7 @@ function PrdInquary({ product, onBack, onAddToCart }) {
 
           <p className="stock">✓ In Stock</p>
 
-          <button className="add-cart" onClick={handleAddToCart}>
+          <button className="add-cart-dels" onClick={handleAddToCart}>
             Add to Cart
           </button>
 
