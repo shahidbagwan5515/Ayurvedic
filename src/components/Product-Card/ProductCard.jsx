@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./ProductCard.css";
 import PrdInquary from "../DetailsCard/PrdInquary";
 
@@ -9,55 +9,164 @@ import cardimg4 from "../../assets/psorakot.png";
 
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCartOutlined";
 
-function ProductCard({ onAddToCart }) {
-  const products = [
-    {
-      id: 1,
-      image: cardimg1,
-      category: "Skin Care",
-      name: "Vibha Sandal Cream",
-      description:
-        "A premium Ayurvedic cream enriched with natural sandalwood extracts for healthy and glowing skin.",
-      price: 250,
-      oldPrice: 299,
-      sizes: ["50g", "100g", "200g"],
-    },
-    {
-      id: 2,
-      image: cardimg2,
-      category: "SKU FGC371",
-      name: "Nimbapatradi Churnam",
-      description:
-        "A traditional Ayurvedic herbal formulation made with carefully selected natural ingredients.",
-      price: 150,
-      oldPrice: 240,
-      sizes: ["50g", "100g", "250g"],
-    },
-    {
-      id: 3,
-      image: cardimg3,
-      category: "Skin Care",
-      name: "Vibha Sandal Cream",
-      description:
-        "A premium Ayurvedic cream enriched with natural sandalwood extracts for healthy and glowing skin.",
-      price: 160,
-      oldPrice: 250,
-      sizes: ["50g", "100g"],
-    },
-    {
-      id: 4,
-      image: cardimg4,
-      category: "SKU FGC371",
-      name: "Psorakot Ayurvedic Handmade Soap",
-      description:
-        "A traditional Ayurvedic herbal formulation made with carefully selected natural ingredients.",
-      price: 198,
-      oldPrice: 299,
-      sizes: ["75g", "100g"],
-    },
-  ];
+const products = [
+  {
+    id: 1,
+    image: cardimg1,
+    category: "Skin Care",
+    name: "Vibha Sandal Cream",
+    description:
+      "A premium Ayurvedic cream enriched with natural sandalwood extracts for healthy and glowing skin.",
+    price: 250,
+    oldPrice: 299,
+    sizes: ["50g", "100g", "200g"],
+  },
+  {
+    id: 2,
+    image: cardimg2,
+    category: "SKU FGC371",
+    name: "Nimbapatradi Churnam",
+    description:
+      "A traditional Ayurvedic herbal formulation made with carefully selected natural ingredients.",
+    price: 150,
+    oldPrice: 240,
+    sizes: ["50g", "100g", "250g"],
+  },
+  {
+    id: 3,
+    image: cardimg3,
+    category: "Skin Care",
+    name: "Vibha Sandal Cream",
+    description:
+      "A premium Ayurvedic cream enriched with natural sandalwood extracts for healthy and glowing skin.",
+    price: 160,
+    oldPrice: 250,
+    sizes: ["50g", "100g"],
+  },
+  {
+    id: 4,
+    image: cardimg4,
+    category: "SKU FGC371",
+    name: "Ayurvedic Handmade Soap",
+    description:
+      "A traditional Ayurvedic herbal formulation made with carefully selected natural ingredients.",
+    price: 198,
+    oldPrice: 299,
+    sizes: ["75g", "100g"],
+  },
 
+  {
+    id: 5,
+    image: cardimg1,
+    category: "Skin Care",
+    name: "Vibha Sandal Cream",
+    description:
+      "A premium Ayurvedic cream enriched with natural sandalwood extracts for healthy and glowing skin.",
+    price: 250,
+    oldPrice: 299,
+    sizes: ["50g", "100g", "200g"],
+  },
+  {
+    id: 6,
+    image: cardimg2,
+    category: "SKU FGC371",
+    name: "Nimbapatradi Churnam",
+    description:
+      "A traditional Ayurvedic herbal formulation made with carefully selected natural ingredients.",
+    price: 150,
+    oldPrice: 240,
+    sizes: ["50g", "100g", "250g"],
+  },
+  {
+    id: 7,
+    image: cardimg4,
+    category: "SKU FGC371",
+    name: " Ayurvedic Handmade Soap",
+    description:
+      "A traditional Ayurvedic herbal formulation made with carefully selected natural ingredients.",
+    price: 198,
+    oldPrice: 299,
+    sizes: ["75g", "100g"],
+  },
+];
+
+function ProductCard({ onAddToCart }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    let animationId;
+    let timeoutId;
+    let paused = false;
+    let scrolling = true;
+
+    const scrollSpeed = 0.5; // Scroll speed
+    const scrollDuration = 2000; // 2 seconds scroll
+    const pauseDuration = 2000; // 2 seconds stop
+
+    const autoScroll = () => {
+      if (!paused && scrolling) {
+        container.scrollLeft += scrollSpeed;
+
+        if (
+          container.scrollLeft + container.clientWidth >=
+          container.scrollWidth - 2
+        ) {
+          container.scrollLeft = 0;
+        }
+      }
+
+      animationId = requestAnimationFrame(autoScroll);
+    };
+
+    const scrollPauseLoop = () => {
+      if (paused) return;
+
+      scrolling = true;
+
+      timeoutId = setTimeout(() => {
+        scrolling = false;
+
+        timeoutId = setTimeout(() => {
+          scrollPauseLoop();
+        }, pauseDuration);
+      }, scrollDuration);
+    };
+
+    const pause = () => {
+      paused = true;
+      clearTimeout(timeoutId);
+    };
+
+    const resume = () => {
+      if (paused) {
+        paused = false;
+        scrollPauseLoop();
+      }
+    };
+
+    container.addEventListener("mouseenter", pause);
+    container.addEventListener("mouseleave", resume);
+    container.addEventListener("touchstart", pause, { passive: true });
+    container.addEventListener("touchend", resume, { passive: true });
+
+    scrollPauseLoop();
+    animationId = requestAnimationFrame(autoScroll);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      clearTimeout(timeoutId);
+
+      container.removeEventListener("mouseenter", pause);
+      container.removeEventListener("mouseleave", resume);
+      container.removeEventListener("touchstart", pause);
+      container.removeEventListener("touchend", resume);
+    };
+  }, []);
 
   const [quantities, setQuantities] = useState(
     products.reduce((acc, product) => {
@@ -111,7 +220,7 @@ function ProductCard({ onAddToCart }) {
   }
 
   return (
-    <section className="prdcard-section">
+    <section className="prdcard-section" ref={scrollRef}>
       {products.map((product) => (
         <div
           className="product-card"

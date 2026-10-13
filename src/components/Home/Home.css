@@ -408,7 +408,7 @@ img {
   flex: 0 0 calc((100% - 72px) / 5);
   width: calc((100% - 72px) / 5);
   min-width: 0;
-  height: 300px;
+  height: 350px;
   border-radius: 14px;
   object-fit: cover;
   object-position: center;

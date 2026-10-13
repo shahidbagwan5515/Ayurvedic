@@ -260,6 +260,84 @@ function Home({ onAddToCart }) {
     }, []);
   };
 
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    let animationId;
+    let timeoutId;
+    let paused = false;
+    let scrolling = true;
+
+    const scrollSpeed = 0.5;
+    const scrollDuration = 2000;
+    const pauseDuration = 2000;
+
+    const autoScroll = () => {
+      if (!paused && scrolling) {
+        const maxScroll = container.scrollWidth - container.clientWidth;
+
+        if (maxScroll > 0) {
+          container.scrollLeft += scrollSpeed;
+
+          if (container.scrollLeft >= maxScroll - 1) {
+            container.scrollLeft = 0;
+          }
+        }
+      }
+
+      animationId = requestAnimationFrame(autoScroll);
+    };
+
+    const scrollPauseLoop = () => {
+      if (paused) return;
+
+      scrolling = true;
+
+      timeoutId = setTimeout(() => {
+        scrolling = false;
+
+        timeoutId = setTimeout(() => {
+          scrollPauseLoop();
+        }, pauseDuration);
+      }, scrollDuration);
+    };
+
+    const pause = () => {
+      paused = true;
+      clearTimeout(timeoutId);
+    };
+
+    const resume = () => {
+      if (!paused) return;
+
+      paused = false;
+      scrollPauseLoop();
+    };
+
+    container.addEventListener("mouseenter", pause);
+    container.addEventListener("mouseleave", resume);
+    container.addEventListener("touchstart", pause, {
+      passive: true,
+    });
+    container.addEventListener("touchend", resume, {
+      passive: true,
+    });
+
+    scrollPauseLoop();
+    animationId = requestAnimationFrame(autoScroll);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      clearTimeout(timeoutId);
+
+      container.removeEventListener("mouseenter", pause);
+      container.removeEventListener("mouseleave", resume);
+      container.removeEventListener("touchstart", pause);
+      container.removeEventListener("touchend", resume);
+    };
+  }, []);
+
   return (
     <>
       {selectedProduct ? (
