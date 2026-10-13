@@ -354,12 +354,12 @@
   }
 
   .product-card {
-    flex: 0 0 75%;
-    width: 75%;
+    flex: 0 0 60%;
+    width: 60%;
   }
 
   .product-image {
-    height: 160px;
+    height: 140px;
   }
 
   .product-offer {
@@ -441,12 +441,12 @@
 
 @media (max-width: 380px) {
   .product-card {
-    flex-basis: 80%;
-    width: 80%;
+    flex-basis: 70%;
+    width: 70%;
   }
 
   .product-image {
-    height: 140px;
+    height: 95px;
   }
 
   .product-content {

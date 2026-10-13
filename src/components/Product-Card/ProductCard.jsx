@@ -47,7 +47,7 @@ const products = [
     id: 4,
     image: cardimg4,
     category: "SKU FGC371",
-    name: "Ayurvedic Handmade Soap",
+    name: " Handmade Soap",
     description:
       "A traditional Ayurvedic herbal formulation made with carefully selected natural ingredients.",
     price: 198,
@@ -81,7 +81,7 @@ const products = [
     id: 7,
     image: cardimg4,
     category: "SKU FGC371",
-    name: " Ayurvedic Handmade Soap",
+    name: "Handmade Soap",
     description:
       "A traditional Ayurvedic herbal formulation made with carefully selected natural ingredients.",
     price: 198,
