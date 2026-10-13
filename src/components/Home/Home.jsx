@@ -375,8 +375,10 @@ function Home({ onAddToCart }) {
           <section className="categories-section">
             <div className="categories-header">
               <h2>
-                <span className="category-logo">🌿</span>
-                Categories
+                <span className="Products-logo">
+                  <img src={ayurLog} alt="" />
+                </span>
+                Categories Products
               </h2>
 
               <button className="view-all-btn">
@@ -444,8 +446,20 @@ function Home({ onAddToCart }) {
           {/* ========= Shoping Card ============  */}
 
           <div className="shoping-producd">
-            <div className="conten-box">
-              <img src={ayurLog} alt="" /> Customer Favorite
+            <div className="Shoping-header">
+              <h2>
+                <span className="Products-logo">
+                  <img src={ayurLog} alt="" />
+                </span>
+                New Arrivals
+              </h2>
+
+              <button className="view-all-btn">
+                <span>View All</span>
+                <span className="arrow-box">
+                  <ArrowForwardIcon />
+                </span>
+              </button>
             </div>
             <div className="card-section">
               <ProductCard onAddToCart={onAddToCart} />
@@ -500,8 +514,20 @@ function Home({ onAddToCart }) {
 
           {/* ========= Shoping Card ============  */}
           <div className="shoping-producd">
-            <div className="conten-box">
-              <img src={ayurLog} alt="" /> Non Prescription Medicines
+            <div className="categories-header">
+              <h2>
+                <span className="Products-logo">
+                  <img src={ayurLog} alt="" />
+                </span>
+                Non Prescription Medicines
+              </h2>
+
+              <button className="view-all-btn">
+                <span>View All</span>
+                <span className="arrow-box">
+                  <ArrowForwardIcon />
+                </span>
+              </button>
             </div>
             <div className="card-section">
               <ProductCard onAddToCart={onAddToCart} />
