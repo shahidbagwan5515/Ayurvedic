@@ -90,7 +90,7 @@ const products = [
   },
 ];
 
-function ProductCard({ onAddToCart }) {
+function ProductCard({ onAddToCart, onProductClick }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const scrollRef = useRef(null);
@@ -225,7 +225,7 @@ function ProductCard({ onAddToCart }) {
         <div
           className="product-card"
           key={product.id}
-          onClick={() => setSelectedProduct(product)}
+          onClick={() => onProductClick?.(product)}
         >
           <div className="product-image">
             <img src={product.image} alt={product.name} />

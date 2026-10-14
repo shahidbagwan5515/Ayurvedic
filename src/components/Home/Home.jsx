@@ -461,8 +461,12 @@ function Home({ onAddToCart }) {
                 </span>
               </button>
             </div>
+
             <div className="card-section">
-              <ProductCard onAddToCart={onAddToCart} />
+              <ProductCard
+                onAddToCart={handleAddToCart}
+                onProductClick={(product) => setSelectedProduct(product)}
+              />
             </div>
           </div>
 
@@ -530,7 +534,10 @@ function Home({ onAddToCart }) {
               </button>
             </div>
             <div className="card-section">
-              <ProductCard onAddToCart={onAddToCart} />
+              <ProductCard
+                onAddToCart={handleAddToCart}
+                onProductClick={(product) => setSelectedProduct(product)}
+              />
             </div>
           </div>
           {/* ========= Image Box ============  */}
