@@ -13,6 +13,8 @@ import Contact from "./components/Contact/Contact";
 import Category from "./components/ShopNow/Category";
 import Blog from "./components/Blog/Blog";
 import BlogDetails from "./components/Blog/BlogDetails";
+import ProductCard from "./components/Product-Card/ProductCard";
+import ViewProduct from "./components/ViewProduct/ViewProduct";
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -43,7 +45,7 @@ function App() {
         <Route path="/wishlist" element={<h1>WishList</h1>} />
         <Route path="/CardEmp" element={<CardEmp />} />
         <Route path="/Category" element={<Category />} />
-
+        <Route path="/ViewProduct" element={<ViewProduct />} />
         <Route
           path="/Mycard"
           element={<MyCard cartItems={cartItems} onRemove={removeFromCart} />}

@@ -1,6 +1,6 @@
 import React from "react";
-import { useState } from "react";
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Home.css";
 import PrdInquary from "../DetailsCard/PrdInquary";
 import BannerImg1 from "../../assets/website_banners-07.webp";
@@ -213,6 +213,7 @@ const steps = [
 const banners = [BannerImg1, BannerImg2, BannerImg3];
 
 function Home({ onAddToCart }) {
+  const navigate = useNavigate();
   const [activeSlide, setActiveSlide] = useState(0);
   const [active, setActive] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -381,7 +382,10 @@ function Home({ onAddToCart }) {
                 Categories Products
               </h2>
 
-              <button className="view-all-btn">
+              <button
+                className="view-all-btn"
+                onClick={() => navigate("/ViewProduct")}
+              >
                 <span>View All</span>
                 <span className="arrow-box">
                   <ArrowForwardIcon />
@@ -454,7 +458,10 @@ function Home({ onAddToCart }) {
                 New Arrivals
               </h2>
 
-              <button className="view-all-btn">
+              <button
+                className="view-all-btn"
+                onClick={() => navigate("/ViewProduct")}
+              >
                 <span>View All</span>
                 <span className="arrow-box">
                   <ArrowForwardIcon />
@@ -488,10 +495,15 @@ function Home({ onAddToCart }) {
                 <h2>Immunity Boosters</h2>
               </div>
 
-              <div className="immunity-view">
+              <button
+                className="view-all-btn"
+                onClick={() => navigate("/ViewProduct")}
+              >
                 <span>View All</span>
-                <EastIcon />
-              </div>
+                <span className="arrow-box">
+                  <ArrowForwardIcon />
+                </span>
+              </button>
             </div>
 
             <div className="immunity-products">
@@ -526,7 +538,10 @@ function Home({ onAddToCart }) {
                 Non Prescription Medicines
               </h2>
 
-              <button className="view-all-btn">
+              <button
+                className="view-all-btn"
+                onClick={() => navigate("/ViewProduct")}
+              >
                 <span>View All</span>
                 <span className="arrow-box">
                   <ArrowForwardIcon />
