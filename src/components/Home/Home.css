@@ -2,6 +2,8 @@
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 .banner-container,
@@ -163,19 +165,15 @@ img {
 /*  CATEGORIES */
 
 .categories-section {
-  margin: 10px 0 10px;
-  padding: 0 16px;
   background: #fff;
 }
 
-.featured-section,
 .categories-header {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  /* margin-bottom: 18px; */
-  padding: 0px 10px 10px 0px;
+  padding: 19px;
 }
 
 .categories-header h2 {
@@ -188,7 +186,6 @@ img {
   font-size: 22px;
   font-weight: 500;
   line-height: 1.35;
-  padding: 0 10px;
 }
 
 .category-logo {
@@ -319,7 +316,7 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 2px 4px;
+  padding: 35px 2px 15px 14px;
 }
 
 .featured-header h2 {
@@ -328,7 +325,7 @@ img {
   gap: 12px;
   margin: 0;
   color: #111;
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 500;
   line-height: 1.35;
 }
@@ -681,26 +678,20 @@ img {
     padding: 0 12px;
   }
 
-  .Shoping-header h2,
-  .categories-header h2 {
-    gap: 6px;
-    font-size: 18px;
-  }
-
-  .category-logo {
-    font-size: 22px;
-  }
-
-  /* CATEGORIES */
-  .categories-section {
-    margin: 10px 0;
-    padding: 0 12px;
-  }
-
-  .featured-section,
   .categories-header {
-    gap: 8px;
-    padding: 0 4px 10px;
+    padding: 12px 12px 12px;
+  }
+
+  .categories-header h2 {
+    margin: 0px;
+    padding: 0;
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .categories-logo img {
+    width: 30px;
+    height: 30px;
   }
 
   .view-all-btn {
@@ -709,8 +700,8 @@ img {
   }
 
   .arrow-box {
-    width: 30px;
-    height: 30px;
+    width: 20px;
+    height: 20px;
     border-radius: 7px;
   }
 
@@ -745,7 +736,12 @@ img {
 
   .featured-header {
     gap: 8px;
-    padding: 2px 0 12px;
+    padding: 12px 12px 12px;
+  }
+
+  .featured-logo img {
+    width: 30px;
+    height: 30px;
   }
 
   .featured-header h2 {
@@ -847,16 +843,12 @@ img {
     border-radius: 10px;
   }
 
-  /* HEADINGS */
-  .Shoping-header {
-    padding: 0 8px;
-  }
 
-  .Shoping-header h2,
-  .categories-header h2 {
+
+  .Shoping-header h2 {
     font-size: 13px;
-    gap: 2px;
-    padding: 0 1px;
+    /* gap: 2px; */
+    /* padding: 0 1px; */
   }
 
   .category-logo {
@@ -865,11 +857,14 @@ img {
 
   /* CATEGORIES */
   .categories-section {
-    padding: 0 8px;
+    padding: 0px;
   }
 
-  .featured-section,
   .categories-header {
+    padding: 8px 8.3px;
+  }
+
+  .featured-section {
     padding: 0 7px;
   }
 
@@ -901,7 +896,11 @@ img {
 
   /* FEATURED */
   .featured-section {
-    padding: 16px 8px;
+    padding: 8px;
+  }
+
+  .featured-header {
+    padding: 8px 9px;
   }
 
   .featured-header h2 {
@@ -987,8 +986,20 @@ img {
     height: 155px;
   }
 
+  .categories-header {
+    padding: 10px 10px 0px 6px;
+  }
+
+  .featured-header {
+    padding: 10px 10px 0px 6px;
+  }
+
+  .Featured-boxs {
+    margin-top: 10px;
+  }
+
   .featured-header h2 {
-    font-size: 16px;
+    font-size: 12px;
   }
 
   .category-item {

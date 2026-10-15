@@ -376,7 +376,7 @@ function Home({ onAddToCart }) {
           <section className="categories-section">
             <div className="categories-header">
               <h2>
-                <span className="Products-logo">
+                <span className="categories-logo">
                   <img src={ayurLog} alt="" />
                 </span>
                 Categories Products
@@ -420,9 +420,9 @@ function Home({ onAddToCart }) {
           {/*  ========= Featured-Products Card ============  */}
 
           <section className="featured-Products">
-            <div className="categories-header">
+            <div className="featured-header">
               <h2>
-                <span className="Products-logo">
+                <span className="featured-logo">
                   <img src={ayurLog} alt="" />
                 </span>
                 Featured Products
@@ -450,9 +450,9 @@ function Home({ onAddToCart }) {
           {/* ========= Shoping Card ============  */}
 
           <div className="shoping-producd">
-            <div className="Shoping-header">
+            <div className="featured-header">
               <h2>
-                <span className="Products-logo">
+                <span className="Shoping-logo">
                   <img src={ayurLog} alt="" />
                 </span>
                 New Arrivals
@@ -530,24 +530,22 @@ function Home({ onAddToCart }) {
 
           {/* ========= Shoping Card ============  */}
           <div className="shoping-producd">
-            <div className="categories-header">
+            <div className="featured-header">
               <h2>
-                <span className="Products-logo">
+                <span className="featured-logo">
                   <img src={ayurLog} alt="" />
                 </span>
                 Non Prescription Medicines
               </h2>
 
-              <button
-                className="view-all-btn"
-                onClick={() => navigate("/ViewProduct")}
-              >
+              <button className="view-all-btn">
                 <span>View All</span>
                 <span className="arrow-box">
                   <ArrowForwardIcon />
                 </span>
               </button>
             </div>
+
             <div className="card-section">
               <ProductCard
                 onAddToCart={handleAddToCart}
