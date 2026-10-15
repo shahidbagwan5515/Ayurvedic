@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./PrdInquary.css";
-
+import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 function PrdInquary({ product, onBack, onAddToCart }) {
   const [quantity, setQuantity] = useState(1);
   const [size, setSize] = useState(product.sizes?.[0] || "");
@@ -32,7 +32,7 @@ function PrdInquary({ product, onBack, onAddToCart }) {
   return (
     <div className="product-detail">
       <button className="back-btn" onClick={onBack}>
-        ← Back
+        <KeyboardBackspaceIcon /> Back
       </button>
 
       <div className="product-detail-card">
