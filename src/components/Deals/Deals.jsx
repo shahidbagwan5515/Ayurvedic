@@ -1,8 +1,9 @@
 import "./Deals.css";
 import { useState } from "react";
 
+import { useNavigate } from "react-router-dom";
 import PrdInquary from "../DetailsCard/PrdInquary";
-
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import BannerImg1 from "../../assets/vibha-men-banner.webp";
 import BannerImg2 from "../../assets/tooth_paste.webp";
 import BannerImg3 from "../../assets/website_banners-07.webp";
@@ -24,6 +25,7 @@ import BottomBanner1 from "../../assets/dealsbanner1.webp";
 import BottomBanner2 from "../../assets/dealsbanners2.webp";
 
 function Deals({ onAddToCart }) {
+  const navigate = useNavigate();
   const [activeSlide, setActiveSlide] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
@@ -139,20 +141,26 @@ function Deals({ onAddToCart }) {
             </div>
           </div>
           <div className="deals-card">
-            <div className="heding-deals">
-              <p>
-                <img src={dealsLogo} alt="Ayurvedic" />
+            <div className="featured-header">
+              <h2 style={{ color: "green", fontWeight: "600" }}>
                 Customer Favorite
-              </p>
+              </h2>
 
-              <div className="rightErro">
+              <button
+                className="view-all-btn"
+                onClick={() => navigate("/ViewProduct")}
+              >
                 <span>View All</span>
-
-                <EastIcon className="east-icon" />
-              </div>
+                <span className="arrow-box">
+                  <ArrowForwardIcon />
+                </span>
+              </button>
             </div>
 
-            <ProductCard />
+            <ProductCard
+              onAddToCart={onAddToCart}
+              onProductClick={(product) => setSelectedProduct(product)}
+            />
           </div>
 
           {/* IMMUNITY BOOSTERS */}
