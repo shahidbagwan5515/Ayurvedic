@@ -45,7 +45,10 @@ function App() {
         <Route path="/wishlist" element={<h1>WishList</h1>} />
         <Route path="/CardEmp" element={<CardEmp />} />
         <Route path="/Category" element={<Category />} />
-        <Route path="/ViewProduct" element={<ViewProduct />} />
+        <Route
+          path="/ViewProduct"
+          element={<ViewProduct onAddToCart={addToCart} />}
+        />
         <Route
           path="/Mycard"
           element={<MyCard cartItems={cartItems} onRemove={removeFromCart} />}
