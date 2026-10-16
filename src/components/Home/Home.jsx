@@ -428,7 +428,10 @@ function Home({ onAddToCart }) {
                 Featured Products
               </h2>
 
-              <button className="view-all-btn">
+              <button
+                className="view-all-btn"
+                onClick={() => navigate("/ViewProduct")}
+              >
                 <span>View All</span>
                 <span className="arrow-box">
                   <ArrowForwardIcon />
@@ -538,7 +541,10 @@ function Home({ onAddToCart }) {
                 Non Prescription Medicines
               </h2>
 
-              <button className="view-all-btn">
+              <button
+                className="view-all-btn"
+                onClick={() => navigate("/ViewProduct")}
+              >
                 <span>View All</span>
                 <span className="arrow-box">
                   <ArrowForwardIcon />
