@@ -1,13 +1,21 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import "./Footer.css";
 
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 function Footer() {
+  const [activeSection, setActiveSection] = useState(null);
+
+  const toggleSection = (section) => {
+    setActiveSection((prev) => (prev === section ? null : section));
+  };
+
   return (
     <footer className="footer">
       {/* Footer Top */}
       <div className="footer-top">
         <div className="footer-brand">
-          {/* <div className="brand-icon">🌿</div> */}
-
           <div>
             <h2>Ayurvedic</h2>
             <p>Natural Care. Better Life.</p>
@@ -26,70 +34,142 @@ function Footer() {
       <div className="footer-content">
         {/* Company */}
         <div className="footer-column">
-          <h3>Company</h3>
+          <h3
+            className="footer-accordion-title"
+            onClick={() => toggleSection("company")}
+          >
+            <span>Company</span>
+            <span className="accordion-icon">
+              {activeSection === "company" ? (
+                <KeyboardArrowUpIcon />
+              ) : (
+                <KeyboardArrowDownIcon />
+              )}
+            </span>
+          </h3>
 
-          <a href="#">About Us</a>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Delivery & Shipping</a>
-          <a href="#">Terms & Conditions</a>
-          <a href="#">Blogs</a>
-          <a href="#">Refund Policy</a>
+          <div
+            className={`footer-accordion-content ${
+              activeSection === "company" ? "active" : ""
+            }`}
+          >
+            <Link to="/AboutUs">About Us</Link>
+            <Link to="/privacy-policy">Privacy Policy</Link>
+            <Link to="/delivery-shipping">Delivery &amp; Shipping</Link>
+            <Link to="/terms">Terms &amp; Conditions</Link>
+            <Link to="/Blog">Blogs</Link>
+            <Link to="/refund-policy">Refund Policy</Link>
+          </div>
         </div>
 
         {/* Quick Links */}
         <div className="footer-column">
-          <h3>Quick Links</h3>
+          <h3
+            className="footer-accordion-title"
+            onClick={() => toggleSection("quick")}
+          >
+            <span>Quick Links</span>
+            <span className="accordion-icon">
+              {activeSection === "company" ? (
+                <KeyboardArrowUpIcon />
+              ) : (
+                <KeyboardArrowDownIcon />
+              )}
+            </span>
+          </h3>
 
-          <a href="/">Home</a>
-          <a href="/Mycard">My Cart</a>
-          <a href="#">Wishlist</a>
-          <a href="#">Publications</a>
-          <a href="/contact">Contact Us</a>
+          <div
+            className={`footer-accordion-content ${
+              activeSection === "quick" ? "active" : ""
+            }`}
+          >
+            <Link to="/">Home</Link>
+            <Link to="/Mycard">My Cart</Link>
+            <Link to="/wishlist">Wishlist</Link>
+            <Link to="/publications">Publications</Link>
+            <Link to="/contact">Contact Us</Link>
+          </div>
         </div>
 
         {/* Categories */}
         <div className="footer-column">
-          <h3>Categories</h3>
+          <h3
+            className="footer-accordion-title"
+            onClick={() => toggleSection("categories")}
+          >
+            <span>Categories</span>
+            <span className="accordion-icon">
+              {activeSection === "company" ? (
+                <KeyboardArrowUpIcon />
+              ) : (
+                <KeyboardArrowDownIcon />
+              )}
+            </span>
+          </h3>
 
-          <a href="#">Kashayam</a>
-          <a href="#">Churnams</a>
-          <a href="#">Tailam</a>
-          <a href="#">Tablets</a>
-          <a href="#">Ghrithams</a>
-          <a href="#">Lehams</a>
+          <div
+            className={`footer-accordion-content ${
+              activeSection === "categories" ? "active" : ""
+            }`}
+          >
+            <Link to="/Category?type=Kashayam">Kashayam</Link>
+            <Link to="/Category?type=Churnams">Churnams</Link>
+            <Link to="/Category?type=Tailam">Tailam</Link>
+            <Link to="/Category?type=Tablets">Tablets</Link>
+            <Link to="/Category?type=Ghrithams">Ghrithams</Link>
+            <Link to="/Category?type=Lehams">Lehams</Link>
+          </div>
         </div>
 
-        {/* Contact */}
+        {/* Contact Us */}
         <div className="footer-column contact-column">
-          <h3>Contact Us</h3>
+          <h3
+            className="footer-accordion-title"
+            onClick={() => toggleSection("contact")}
+          >
+            <span>Contact Us</span>
+            <span className="accordion-icon">
+              {activeSection === "company" ? (
+                <KeyboardArrowUpIcon />
+              ) : (
+                <KeyboardArrowDownIcon />
+              )}
+            </span>
+          </h3>
 
-          <div className="contact-item">
-            <div className="contact-icon">☎</div>
-            <div>
-              <span>Call Us</span>
-              <p>+91 1234567890</p>
+          <div
+            className={`footer-accordion-content ${
+              activeSection === "contact" ? "active" : ""
+            }`}
+          >
+            <div className="contact-item">
+              <div className="contact-icon">☎</div>
+              <div>
+                <span>Call Us</span>
+                <p>+91 1234567890</p>
+              </div>
             </div>
-          </div>
 
-          <div className="contact-item">
-            <div className="contact-icon">✉</div>
-            <div>
-              <span>Email Us</span>
-              <p>contact@superadmin.com</p>
+            <div className="contact-item">
+              <div className="contact-icon">✉</div>
+              <div>
+                <span>Email Us</span>
+                <p>contact@superadmin.com</p>
+              </div>
             </div>
-          </div>
 
-          <div className="contact-item">
-            <div className="contact-icon">⌖</div>
-            <div>
-              <span>Visit Us</span>
-              <p>
-                Head office, Kottakkal (PO),
-                <br />
-                Malappuram (Dist.), Kerala,
-                <br />
-                676 503, INDIA.
-              </p>
+            <div className="contact-item">
+              <div className="contact-icon">⌖</div>
+              <div>
+                <span>Visit Us</span>
+                <p>
+                  Head office, Kottakkal (PO),
+                  <br />
+                  Malappuram (Dist.), Kerala,
+                  <br />
+                  676 503, INDIA.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -103,24 +183,24 @@ function Footer() {
           </p>
 
           <div className="newsletter-box">
-            <input type="email" placeholder="Your email address" />
-
-            <button>Subscribe</button>
+            <input
+              type="email"
+              placeholder="Your email address"
+              aria-label="Your email address"
+            />
+            <button type="button">Subscribe</button>
           </div>
 
           <div className="social-links">
             <a href="#" aria-label="Facebook">
               f
             </a>
-
             <a href="#" aria-label="Instagram">
               ◎
             </a>
-
             <a href="#" aria-label="YouTube">
               ▶
             </a>
-
             <a href="#" aria-label="Twitter">
               𝕏
             </a>
@@ -128,14 +208,14 @@ function Footer() {
         </div>
       </div>
 
-      {/* Bottom */}
+      {/* Footer Bottom */}
       <div className="footer-bottom">
         <p>© 2026 Ayurvedic. All Rights Reserved.</p>
 
         <div className="footer-bottom-links">
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
-          <a href="#">Refund Policy</a>
+          <Link to="/privacy-policy">Privacy</Link>
+          <Link to="/terms">Terms</Link>
+          <Link to="/refund-policy">Refund Policy</Link>
         </div>
       </div>
     </footer>

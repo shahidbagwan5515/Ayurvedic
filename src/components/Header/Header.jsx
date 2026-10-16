@@ -191,9 +191,9 @@ function Header({ cartItems }) {
             </Menu>
             <Link to="/">Home</Link>
             <Link to="/deals">Deals</Link>
-
-            <Link to="/contact">Contact Us</Link>
             <Link to="/Blog">Blog</Link>
+            <Link to="/contact">Contact Us</Link>
+            <Link to="/AboutUs">About Us</Link>
           </div>
 
           {/* =========================
@@ -307,6 +307,12 @@ function Header({ cartItems }) {
               <span>Deals</span>
             </ListItem>
 
+            {/*Blog */}
+            <ListItem component={Link} to="/Blog" onClick={toggleDrawer(false)}>
+              <ArticleOutlinedIcon />
+              <span>Blog</span>
+            </ListItem>
+
             {/* Contact Us */}
             <ListItem
               component={Link}
@@ -317,10 +323,14 @@ function Header({ cartItems }) {
               <span>Contact Us</span>
             </ListItem>
 
-            {/*Blog */}
-            <ListItem component={Link} to="/Blog" onClick={toggleDrawer(false)}>
-              <ArticleOutlinedIcon />
-              <span>Blog</span>
+            {/* Contact Us */}
+            <ListItem
+              component={Link}
+              to="/AboutUs"
+              onClick={toggleDrawer(false)}
+            >
+              <ContactSupportOutlinedIcon />
+              <span>About Us</span>
             </ListItem>
 
             {/* Wishlist */}
