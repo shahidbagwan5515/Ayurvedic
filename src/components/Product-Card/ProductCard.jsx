@@ -209,6 +209,14 @@ function ProductCard({ onAddToCart, onProductClick }) {
     }
   };
 
+  const handleUpdateQuantity = (productId, newQuantity) => {
+    setCartItems((previousItems) =>
+      previousItems.map((item) =>
+        item.id === productId ? { ...item, quantity: newQuantity } : item,
+      ),
+    );
+  };
+
   if (selectedProduct) {
     return (
       <PrdInquary
