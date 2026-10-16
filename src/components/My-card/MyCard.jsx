@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import CardEmp from "./CardEmp";
 import "./Mycard.css";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 function MyCard({ cartItems = [], onRemove, onUpdateQuantity }) {
   const [discountCode, setDiscountCode] = useState("");
@@ -151,8 +152,9 @@ function MyCard({ cartItems = [], onRemove, onUpdateQuantity }) {
                         aria-label="Remove product"
                         title="Remove product"
                       >
-                        <span aria-hidden="true">🗑</span>
-                        <span className="delete-text">Remove</span>
+                        <span aria-hidden="true">
+                          <DeleteIcon />
+                        </span>
                       </button>
                     </div>
 
