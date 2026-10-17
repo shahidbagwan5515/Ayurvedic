@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import "./Wishlist.css";
@@ -11,11 +12,14 @@ import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import ImportContactsOutlinedIcon from "@mui/icons-material/ImportContactsOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import Login from "../Login/Login";
 
 function Wishlist({ wishlistItems = [], onWishlistChange, onAddToCart }) {
   const [activeTab, setActiveTab] = useState("Wishlist");
   const [cartMessage, setCartMessage] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+
+  const [loginOpen, setLoginOpen] = React.useState(false);
 
   // Remove product from shared wishlist state.
   const removeFromWishlist = (id) => {
@@ -103,7 +107,7 @@ function Wishlist({ wishlistItems = [], onWishlistChange, onAddToCart }) {
           <button
             type="button"
             className="account-menu-item logout-menu"
-            onClick={handleLogout}
+            onClick={() => setLoginOpen(true)}
           >
             <LogoutOutlinedIcon />
             <span>Logout</span>
@@ -277,6 +281,8 @@ function Wishlist({ wishlistItems = [], onWishlistChange, onAddToCart }) {
           </IconButton>
         }
       />
+
+      <Login open={loginOpen} onClose={() => setLoginOpen(false)} />
     </div>
   );
 }
