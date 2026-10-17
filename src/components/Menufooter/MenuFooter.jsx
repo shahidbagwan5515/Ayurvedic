@@ -9,7 +9,7 @@ import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined
 import Login from "../Login/Login";
 import "./MenuFooter.css";
 
-function MenuFooter({ cartItems = [] }) {
+function MenuFooter({ cartItems = [], wishlistItems = [] }) {
   const [loginOpen, setLoginOpen] = React.useState(false);
 
   return (
@@ -33,7 +33,16 @@ function MenuFooter({ cartItems = [] }) {
             `mobile-menu-item ${isActive ? "active-menu" : ""}`
           }
         >
-          <FavoriteBorderOutlinedIcon />
+          <div className="menu-icon-wrapper">
+            <FavoriteBorderOutlinedIcon />
+
+            {wishlistItems.length > 0 && (
+              <span className="menu-badge">
+                {wishlistItems.length > 99 ? "99+" : wishlistItems.length}
+              </span>
+            )}
+          </div>
+
           <span>Wishlist</span>
         </NavLink>
 

@@ -702,50 +702,56 @@
   }
 }
 
-/* Small mobile */
+/* Mobile: Cart product column layout */
 @media (max-width: 480px) {
-  .cart-page {
-    padding: 20px 12px 35px;
-  }
-
   .cart-heading h1 {
-    font-size: 26px;
+    font-size: 17px;
+    font-weight: 500;
   }
 
   .cart-heading p {
-    max-width: 220px;
-  }
-
-  .cart-item-count {
-    padding: 7px 10px;
-    font-size: 10px;
-  }
-
-  .cart-products-panel {
-    padding: 14px;
-    border-radius: 12px;
-  }
-
-  .cart-panel-heading h2 {
-    font-size: 18px;
-  }
-
-  .cart-panel-heading>span {
     font-size: 11px;
   }
 
+  .cart-panel-heading h2 {
+    font-size: 13px;
+  }
+
+  .cart-panel-heading span {
+    font-size: 12px;
+  }
+
   .cart-product {
-    gap: 12px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+    padding: 20px 0;
   }
 
   .cart-product-image {
-    width: 90px;
-    height: 105px;
-    padding: 6px;
+    width: 100%;
+    height: 100px;
+    padding: 12px;
+  }
+
+  .cart-product-image img {
+    width: 100%;
+    height: 190px;
+    padding: 12px;
+  }
+
+  .cart-product-info {
+    width: 100%;
+    flex: none;
   }
 
   .cart-product-top {
-    gap: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .cart-product-top h3 {
@@ -753,52 +759,23 @@
   }
 
   .cart-product-description {
-    margin: 8px 0;
-    font-size: 11px;
-    line-height: 1.5;
-  }
-
-  .cart-product-meta {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .cart-product-bottom {
-    align-items: flex-end;
-    gap: 8px;
-  }
-
-  .cart-quantity {
-    min-width: 91px;
-    height: 34px;
-  }
-
-  .cart-quantity button {
-    width: 24px;
-    height: 24px;
-    font-size: 18px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
   }
 
   .cart-product-price strong {
     font-size: 15px;
   }
 
-  .cart-product-price>span {
-    font-size: 10px;
-  }
-
-  .cart-delete-btn {
-    padding: 4px;
-  }
-
-  .cart-summary {
-    padding: 17px;
-  }
-
-  .cart-grand-total>strong {
-    font-size: 20px;
-  }
-
-  .cart-grand-total h3 {
-    font-size: 14px;
+  .cart-grand-total strong {
+    font-size: 15px;
   }
 }

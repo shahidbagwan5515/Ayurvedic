@@ -36,7 +36,8 @@ import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import Companylog from "../../assets/AjitlabLogo.png";
 import Companylog2 from "../../assets/navLog.png";
-function Header({ cartItems }) {
+
+function Header({ cartItems, wishlistItems = [] }) {
   const id = React.useId();
 
   const buttonId = `${id}-button`;
@@ -119,6 +120,33 @@ function Header({ cartItems }) {
 
     { label: "Publications", link: "/publications" },
   ];
+
+  const getWishlistCount = () => {
+    try {
+      const items = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
+      return items.length;
+    } catch {
+      return 0;
+    }
+  };
+
+  const [wishlistCount, setWishlistCount] = React.useState(0);
+
+  React.useEffect(() => {
+    const syncWishlist = () => {
+      setWishlistCount(getWishlistCount());
+    };
+
+    syncWishlist();
+
+    window.addEventListener("wishlistUpdated", syncWishlist);
+    window.addEventListener("storage", syncWishlist);
+
+    return () => {
+      window.removeEventListener("wishlistUpdated", syncWishlist);
+      window.removeEventListener("storage", syncWishlist);
+    };
+  }, []);
 
   return (
     <>
@@ -220,14 +248,19 @@ function Header({ cartItems }) {
           <div className="header-right">
             <div className="icons-left">
               {/* Wishlist */}
-              <IconButton aria-label="wishlist">
-                <FavoriteBorderIcon fontSize="small" />
+              <Link to="/wishlist">
+                <IconButton aria-label="wishlist">
+                  <FavoriteBorderIcon fontSize="small" />
 
-                <CartBadge badgeContent={1} color="error" overlap="circular" />
-
-                <span>Wishlist</span>
-              </IconButton>
-
+                  <CartBadge
+                    badgeContent={wishlistItems.length}
+                    color="error"
+                    overlap="circular"
+                    showZero={false}
+                  />
+                  <span>Wishlist</span>
+                </IconButton>
+              </Link>
               {/* Cart */}
               <Link to="/Mycard">
                 <IconButton aria-label="cart">
@@ -334,15 +367,13 @@ function Header({ cartItems }) {
             </ListItem>
 
             {/* Wishlist */}
-            <ListItem>
-              <IconButton
-                component={Link}
-                to="/wishlist"
-                onClick={toggleDrawer(false)}
-              >
-                <FavoriteBorderIcon />
-                <span>Wishlist</span>
-              </IconButton>
+            <ListItem
+              component={Link}
+              to="/wishlist"
+              onClick={toggleDrawer(false)}
+            >
+              <FavoriteBorderIcon />
+              <span>Wishlist</span>
             </ListItem>
 
             {/* Cart */}
