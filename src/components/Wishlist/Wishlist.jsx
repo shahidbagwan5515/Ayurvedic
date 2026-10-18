@@ -258,7 +258,7 @@ function Wishlist({ wishlistItems = [], onWishlistChange, onAddToCart }) {
           setSnackbarOpen(false);
         }}
         anchorOrigin={{
-          vertical: "bottom",
+          vertical: "top",
           horizontal: "right",
         }}
         slotProps={{
