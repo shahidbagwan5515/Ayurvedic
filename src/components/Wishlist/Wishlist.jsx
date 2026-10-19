@@ -13,8 +13,14 @@ import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlin
 import ImportContactsOutlinedIcon from "@mui/icons-material/ImportContactsOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import Login from "../Login/Login";
+import OrderHistory from "./OrderHistory/OrderHistory";
 
-function Wishlist({ wishlistItems = [], onWishlistChange, onAddToCart }) {
+function Wishlist({
+  wishlistItems = [],
+  onWishlistChange,
+  onAddToCart,
+  orders = [],
+}) {
   const [activeTab, setActiveTab] = useState("Wishlist");
   const [cartMessage, setCartMessage] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -63,7 +69,7 @@ function Wishlist({ wishlistItems = [], onWishlistChange, onAddToCart }) {
 
   const menuItems = [
     { name: "My Account", icon: "user" },
-    { name: "My Orders", icon: "box" },
+    { name: "Orders History", icon: "box" },
     { name: "Wishlist", icon: "heart" },
     { name: "Address Book", icon: "book" },
   ];
@@ -132,26 +138,10 @@ function Wishlist({ wishlistItems = [], onWishlistChange, onAddToCart }) {
             </div>
           )}
 
-          {activeTab === "My Orders" && (
-            <div className="account-tab-body">
-              <div className="account-empty-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="m12 2 9 5-9 5-9-5 9-5Z" />
-                  <path d="M3 7v10l9 5 9-5V7" />
-                  <path d="M12 12v10" />
-                </svg>
-              </div>
-
-              <h2>No orders found</h2>
-              <p>
-                You haven't placed any orders yet. Your order history will
-                appear here once you make a purchase.
-              </p>
-
-              <Link to="/" className="wishlist-shop-btn">
-                Start Shopping
-              </Link>
-            </div>
+          {activeTab === "Orders History" && (
+            // <div className="account-tab-body">
+            <OrderHistory orders={orders} />
+            // </div>
           )}
 
           {activeTab === "Address Book" && (

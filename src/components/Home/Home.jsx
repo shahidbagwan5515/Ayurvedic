@@ -368,7 +368,7 @@ function Home({ onAddToCart, wishlistItems, onWishlistChange }) {
               </div>
             </div>
             <div className="banner-right">
-              <img src={BannerImg4} alt="" srcset="" />
+              <img src={BannerImg4} alt="" />
             </div>
           </div>
 

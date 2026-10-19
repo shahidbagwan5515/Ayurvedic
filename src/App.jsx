@@ -17,12 +17,14 @@ import BlogDetails from "./components/Blog/BlogDetails";
 import ViewProduct from "./components/ViewProduct/ViewProduct";
 import AboutUs from "./components/About Us/AboutUs";
 import Wishlist from "./components/Wishlist/Wishlist";
+import Checkout from "./components/My-card/Checkout/Checkout";
+import OrderHistory from "./components/Wishlist/OrderHistory/OrderHistory";
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
+  const [orders, setOrders] = useState([]);
 
-  // Add product to cart; increase quantity if it already exists.
   const addToCart = (product) => {
     setCartItems((previous) => {
       const existing = previous.find((item) => item.id === product.id);
@@ -54,6 +56,37 @@ function App() {
     setCartItems((previous) => previous.filter((product) => product.id !== id));
   };
 
+  const updateCartQuantity = (id, quantity) => {
+    setCartItems((previous) =>
+      previous.map((item) =>
+        item.id === id
+          ? { ...item, quantity: Math.max(1, Number(quantity) || 1) }
+          : item,
+      ),
+    );
+  };
+
+  const placeOrder = (orderData) => {
+    const newOrder = {
+      id: `ORD-${Date.now()}`,
+      date: new Date().toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+      status: "Processing",
+      payment: "Paid",
+      total: orderData.total,
+      products: orderData.products.map((product) => ({
+        ...product,
+        quantity: Number(product.quantity) || 1,
+        price: Number(product.price) || 0,
+      })),
+    };
+
+    setOrders((previous) => [newOrder, ...previous]);
+    setCartItems([]);
+  };
   return (
     <BrowserRouter>
       <ScrollToTop />
@@ -100,10 +133,10 @@ function App() {
               wishlistItems={wishlistItems}
               onWishlistChange={setWishlistItems}
               onAddToCart={addToCart}
+              orders={orders}
             />
           }
         />
-
         <Route
           path="/ViewProduct"
           element={
@@ -116,8 +149,31 @@ function App() {
         />
 
         <Route
+          path="/OrderHistory"
+          element={<OrderHistory orders={orders} />}
+        />
+
+        <Route
           path="/Mycard"
-          element={<MyCard cartItems={cartItems} onRemove={removeFromCart} />}
+          element={
+            <MyCard
+              cartItems={cartItems}
+              onRemove={removeFromCart}
+              onUpdateQuantity={updateCartQuantity}
+            />
+          }
+        />
+
+        <Route
+          path="/Checkout"
+          element={
+            <Checkout
+              cartItems={cartItems}
+              onRemove={removeFromCart}
+              onUpdateQuantity={updateCartQuantity}
+              onPlaceOrder={placeOrder}
+            />
+          }
         />
 
         <Route path="/Footer" element={<Footer />} />
