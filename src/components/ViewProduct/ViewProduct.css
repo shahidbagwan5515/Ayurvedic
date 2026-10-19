@@ -125,7 +125,7 @@
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: #fff;
+  background: transparent;
   color: #176b45;
   cursor: pointer;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
@@ -138,8 +138,8 @@
 
 .view-wishlist-btn:hover,
 .view-wishlist-btn.active {
-  background: #176b45;
-  color: #fff;
+  /* background: #176b45; */
+  color: #e71212;
 }
 
 /* Content */

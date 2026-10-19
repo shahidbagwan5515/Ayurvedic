@@ -106,7 +106,13 @@ function App() {
 
         <Route
           path="/ViewProduct"
-          element={<ViewProduct onAddToCart={addToCart} />}
+          element={
+            <ViewProduct
+              onAddToCart={addToCart}
+              wishlistItems={wishlistItems}
+              onWishlistChange={setWishlistItems}
+            />
+          }
         />
 
         <Route

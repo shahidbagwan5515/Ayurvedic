@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./ViewProduct.css";
 
 import PrdInquary from "../DetailsCard/PrdInquary";
@@ -93,25 +93,17 @@ const products = [
   },
 ];
 
-function ViewProduct({ onAddToCart }) {
+function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantities, setQuantities] = useState(
     Object.fromEntries(products.map((product) => [product.id, 1])),
   );
-
-  const [favorites, setFavorites] = useState([]);
 
   const changeQuantity = (id, amount) => {
     setQuantities((prev) => ({
       ...prev,
       [id]: Math.max(1, prev[id] + amount),
     }));
-  };
-
-  const toggleFavorite = (id) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
   };
 
   const handleAddToCart = (product) => {
@@ -121,6 +113,18 @@ function ViewProduct({ onAddToCart }) {
         quantity: product.quantity ?? quantities[product.id] ?? 1,
       });
     }
+  };
+
+  const favorites = wishlistItems.map((item) => item.id);
+
+  const toggleFavorite = (product) => {
+    if (typeof onWishlistChange !== "function") return;
+
+    onWishlistChange((previous) =>
+      previous.some((item) => item.id === product.id)
+        ? previous.filter((item) => item.id !== product.id)
+        : [...previous, { ...product, inStock: true }],
+    );
   };
 
   return (
@@ -159,15 +163,28 @@ function ViewProduct({ onAddToCart }) {
                     <img src={product.image} alt={product.name} />
 
                     <span className="view-product-offer">{discount}% OFF</span>
-
                     <button
+                      type="button"
                       className={`view-wishlist-btn ${
                         favorites.includes(product.id) ? "active" : ""
                       }`}
-                      aria-label="Add to wishlist"
-                      onClick={() => toggleFavorite(product.id)}
+                      aria-label={
+                        favorites.includes(product.id)
+                          ? "Remove from wishlist"
+                          : "Add to wishlist"
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(product);
+                      }}
                     >
-                      <FavoriteBorderIcon />
+                      <FavoriteBorderIcon
+                        sx={{
+                          color: favorites.includes(product.id)
+                            ? "red"
+                            : "inherit",
+                        }}
+                      />
                     </button>
                   </div>
 
