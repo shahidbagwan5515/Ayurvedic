@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import "./ViewProduct.css";
 
 import PrdInquary from "../DetailsCard/PrdInquary";
+
 import cardimg1 from "../../assets/banner-1.jpeg";
 import cardimg2 from "../../assets/nimbapatradi_churnam.jpg";
 import cardimg3 from "../../assets/shop.jpeg";
@@ -94,37 +96,59 @@ const products = [
 ];
 
 function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
+  const location = useLocation();
+
+  // Header se search term receive hoga
+  const searchTerm = (location.state?.searchTerm || "").trim().toLowerCase();
+
   const [selectedProduct, setSelectedProduct] = useState(null);
+
   const [quantities, setQuantities] = useState(
     Object.fromEntries(products.map((product) => [product.id, 1])),
   );
 
+  // Product name, category aur description ke according search
+  const filteredProducts = products.filter((product) => {
+    return (
+      product.name.toLowerCase().includes(searchTerm) ||
+      product.category.toLowerCase().includes(searchTerm) ||
+      product.description.toLowerCase().includes(searchTerm)
+    );
+  });
+
+  // Quantity change
   const changeQuantity = (id, amount) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: Math.max(1, prev[id] + amount),
+    setQuantities((previous) => ({
+      ...previous,
+      [id]: Math.max(1, (previous[id] || 1) + amount),
     }));
   };
 
+  // Add to cart
   const handleAddToCart = (product) => {
-    if (onAddToCart) {
-      onAddToCart({
-        ...product,
-        quantity: product.quantity ?? quantities[product.id] ?? 1,
-      });
-    }
+    if (typeof onAddToCart !== "function") return;
+
+    onAddToCart({
+      ...product,
+      quantity: quantities[product.id] || 1,
+    });
   };
 
+  // Wishlist
   const favorites = wishlistItems.map((item) => item.id);
 
   const toggleFavorite = (product) => {
     if (typeof onWishlistChange !== "function") return;
 
-    onWishlistChange((previous) =>
-      previous.some((item) => item.id === product.id)
-        ? previous.filter((item) => item.id !== product.id)
-        : [...previous, { ...product, inStock: true }],
-    );
+    onWishlistChange((previous) => {
+      const alreadyFavorite = previous.some((item) => item.id === product.id);
+
+      if (alreadyFavorite) {
+        return previous.filter((item) => item.id !== product.id);
+      }
+
+      return [...previous, { ...product, inStock: true }];
+    });
   };
 
   return (
@@ -137,111 +161,145 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
         />
       ) : (
         <section className="view-products-section">
+          {/* Header */}
           <div className="view-products-header">
             <div>
               <span className="view-products-eyebrow">OUR COLLECTION</span>
-              <h2>All Products</h2>
+
+              <h2>{searchTerm ? "Search Results" : "All Products"}</h2>
+
+              {searchTerm && (
+                <p className="search-result-text">
+                  Results for "{location.state?.searchTerm}"
+                </p>
+              )}
             </div>
 
-            <span className="products-count">{products.length} Products</span>
+            <span className="products-count">
+              {filteredProducts.length} Products
+            </span>
           </div>
 
+          {/* Products Grid */}
           <div className="view-products-grid">
-            {products.map((product) => {
-              const discount = Math.round(
-                ((product.oldPrice - product.price) / product.oldPrice) * 100,
-              );
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => {
+                const discount = Math.round(
+                  ((product.oldPrice - product.price) / product.oldPrice) * 100,
+                );
 
-              return (
-                <article
-                  className="view-product-card"
-                  key={product.id}
-                  onClick={() => setSelectedProduct(product)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div className="view-product-image">
-                    <img src={product.image} alt={product.name} />
+                const isFavorite = favorites.includes(product.id);
 
-                    <span className="view-product-offer">{discount}% OFF</span>
-                    <button
-                      type="button"
-                      className={`view-wishlist-btn ${
-                        favorites.includes(product.id) ? "active" : ""
-                      }`}
-                      aria-label={
-                        favorites.includes(product.id)
-                          ? "Remove from wishlist"
-                          : "Add to wishlist"
-                      }
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(product);
-                      }}
-                    >
-                      <FavoriteBorderIcon
-                        sx={{
-                          color: favorites.includes(product.id)
-                            ? "red"
-                            : "inherit",
+                return (
+                  <article
+                    className="view-product-card"
+                    key={product.id}
+                    onClick={() => setSelectedProduct(product)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {/* Product Image */}
+                    <div className="view-product-image">
+                      <img src={product.image} alt={product.name} />
+
+                      <span className="view-product-offer">
+                        {discount}% OFF
+                      </span>
+
+                      {/* Wishlist */}
+                      <button
+                        type="button"
+                        className={`view-wishlist-btn ${
+                          isFavorite ? "active" : ""
+                        }`}
+                        aria-label={
+                          isFavorite
+                            ? "Remove from wishlist"
+                            : "Add to wishlist"
+                        }
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleFavorite(product);
                         }}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="view-product-content">
-                    <span className="view-product-category">
-                      {product.category}
-                    </span>
-
-                    <h3>{product.name}</h3>
-
-                    <p className="view-product-description">
-                      {product.description}
-                    </p>
-
-                    <div className="view-product-footer">
-                      <div className="view-price-wrapper">
-                        <span className="view-product-price">
-                          ₹{product.price}
-                        </span>
-                        <span className="view-old-price">
-                          ₹{product.oldPrice}
-                        </span>
-                      </div>
-
-                      <div className="view-quantity-box">
-                        <button
-                          aria-label="Decrease quantity"
-                          onClick={() => changeQuantity(product.id, -1)}
-                        >
-                          −
-                        </button>
-
-                        <span>{quantities[product.id]}</span>
-
-                        <button
-                          aria-label="Increase quantity"
-                          onClick={() => changeQuantity(product.id, 1)}
-                        >
-                          +
-                        </button>
-                      </div>
+                      >
+                        <FavoriteBorderIcon
+                          sx={{
+                            color: isFavorite ? "red" : "inherit",
+                          }}
+                        />
+                      </button>
                     </div>
 
-                    <button
-                      className="view-add-cart-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(product);
-                      }}
-                    >
-                      Add to Cart
-                      <ShoppingCartIcon />
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
+                    {/* Product Details */}
+                    <div className="view-product-content">
+                      <span className="view-product-category">
+                        {product.category}
+                      </span>
+
+                      <h3>{product.name}</h3>
+
+                      <p className="view-product-description">
+                        {product.description}
+                      </p>
+
+                      {/* Price and Quantity */}
+                      <div className="view-product-footer">
+                        <div className="view-price-wrapper">
+                          <span className="view-product-price">
+                            ₹{product.price}
+                          </span>
+
+                          <span className="view-old-price">
+                            ₹{product.oldPrice}
+                          </span>
+                        </div>
+
+                        <div
+                          className="view-quantity-box"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            aria-label="Decrease quantity"
+                            onClick={() => changeQuantity(product.id, -1)}
+                          >
+                            −
+                          </button>
+
+                          <span>{quantities[product.id] || 1}</span>
+
+                          <button
+                            type="button"
+                            aria-label="Increase quantity"
+                            onClick={() => changeQuantity(product.id, 1)}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Add to Cart */}
+                      <button
+                        type="button"
+                        className="view-add-cart-btn"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleAddToCart(product);
+                        }}
+                      >
+                        Add to Cart
+                        <ShoppingCartIcon />
+                      </button>
+                    </div>
+                  </article>
+                );
+              })
+            ) : (
+              <div className="no-products-found">
+                <h3>No products found</h3>
+
+                <p>Try searching with another product name or category.</p>
+              </div>
+            )}
           </div>
         </section>
       )}

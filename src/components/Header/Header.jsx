@@ -1,6 +1,12 @@
 import * as React from "react";
+import { useNavigate, Link } from "react-router-dom";
 import "./Header.css";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+
+// import SearchIcon from "@mui/icons-material/Search";
+// import InputBase from "@mui/material/InputBase";
+import "./Header.css";
+// import { Link } from "react-router-dom";
 
 import { styled } from "@mui/material/styles";
 import Badge, { badgeClasses } from "@mui/material/Badge";
@@ -37,6 +43,39 @@ import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import Companylog from "../../assets/AjitlabLogo.png";
 import Companylog2 from "../../assets/navLog.png";
 
+const searchProducts = [
+  {
+    id: 1,
+    name: "Vibha Sandal Cream",
+    price: 250,
+    path: "/ViewProduct",
+  },
+  {
+    id: 2,
+    name: "Nimbapatradi Churnam",
+    price: 150,
+    path: "/ViewProduct",
+  },
+  {
+    id: 3,
+    name: "Handmade Soap",
+    price: 198,
+    path: "/ViewProduct",
+  },
+  {
+    id: 4,
+    name: "Dasamularishtam",
+    price: 130,
+    path: "/ViewProduct",
+  },
+  {
+    id: 5,
+    name: "Chyavanaprasam",
+    price: 285,
+    path: "/ViewProduct",
+  },
+];
+
 function Header({ cartItems, wishlistItems = [] }) {
   const id = React.useId();
 
@@ -48,6 +87,26 @@ function Header({ cartItems, wishlistItems = [] }) {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
 
   const [loginOpen, setLoginOpen] = React.useState(false);
+  const navigate = useNavigate();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const filteredProducts = searchProducts.filter((product) =>
+    product.name.toLowerCase().includes(searchTerm.trim().toLowerCase()),
+  );
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+
+    if (!searchTerm.trim()) return;
+
+    setShowSuggestions(false);
+
+    navigate("/ViewProduct", {
+      state: { searchTerm: searchTerm.trim() },
+    });
+  };
 
   const menuOpen = Boolean(anchorEl);
 
@@ -220,8 +279,8 @@ function Header({ cartItems, wishlistItems = [] }) {
             <Link to="/">Home</Link>
             <Link to="/deals">Deals</Link>
             <Link to="/Blog">Blog</Link>
-            <Link to="/contact">Contact Us</Link>
-            <Link to="/AboutUs">About Us</Link>
+            <Link to="/contact">Contact</Link>
+            <Link to="/AboutUs">About </Link>
           </div>
 
           {/* =========================
@@ -229,16 +288,66 @@ function Header({ cartItems, wishlistItems = [] }) {
           ========================= */}
 
           <div className="header-center">
-            <div className="search-box">
+            <form className="search-box" onSubmit={handleSearch}>
               <SearchIcon className="search-icon" />
 
               <InputBase
-                placeholder="Search for what you want..."
-                inputProps={{
-                  "aria-label": "search",
+                placeholder="Search for products..."
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setShowSuggestions(true);
                 }}
+                onFocus={() => setShowSuggestions(true)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setShowSuggestions(false);
+                  }
+                }}
+                inputProps={{
+                  "aria-label": "Search products",
+                }}
+                fullWidth
               />
-            </div>
+
+              {searchTerm && (
+                <button
+                  type="button"
+                  className="search-clear"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setShowSuggestions(false);
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+
+              {showSuggestions && searchTerm.trim() && (
+                <div className="search-suggestions">
+                  {filteredProducts.length > 0 ? (
+                    filteredProducts.map((product) => (
+                      <button
+                        type="button"
+                        className="search-suggestion-item"
+                        key={product.id}
+                        onClick={() => {
+                          setShowSuggestions(false);
+                          navigate(product.path, {
+                            state: { searchTerm: product.name },
+                          });
+                        }}
+                      >
+                        <span>{product.name}</span>
+                        <strong>₹{product.price}</strong>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="search-no-results">No products found</p>
+                  )}
+                </div>
+              )}
+            </form>
           </div>
 
           {/* =========================

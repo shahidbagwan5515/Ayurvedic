@@ -258,59 +258,15 @@ function Checkout({
                 + Add Delivery Address
               </button>
             )}
-          </section>
 
-          {/* Billing address */}
-          <section className="checkout-address-card">
-            <h2>Billing Address</h2>
-
-            {billingAddress ? (
-              <div className="checkout-saved-address">
-                <strong>{billingAddress.name}</strong>
-                <p>{billingAddress.phone}</p>
-                <p>{billingAddress.address}</p>
-                <p>
-                  {billingAddress.city}, {billingAddress.state} -{" "}
-                  {billingAddress.pincode}
-                </p>
-
-                <button
-                  type="button"
-                  className="checkout-text-btn"
-                  onClick={() => openAddressForm("billing")}
-                >
-                  Change Address
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="checkout-add-address"
-                onClick={() => openAddressForm("billing")}
-              >
-                + Add Billing Address
-              </button>
-            )}
-          </section>
-
-          {/* Address form */}
-          {showAddressForm && (
-            <section className="checkout-address-form-card">
-              <h2>
-                Add {showAddressForm === "delivery" ? "Delivery" : "Billing"}{" "}
-                Address
-              </h2>
-
+            {showAddressForm === "delivery" && (
               <form onSubmit={saveAddress} className="checkout-address-form">
                 <input
                   type="text"
                   placeholder="Full Name"
                   value={addressForm.name}
                   onChange={(e) =>
-                    setAddressForm({
-                      ...addressForm,
-                      name: e.target.value,
-                    })
+                    setAddressForm({ ...addressForm, name: e.target.value })
                   }
                   required
                 />
@@ -320,10 +276,7 @@ function Checkout({
                   placeholder="Phone Number"
                   value={addressForm.phone}
                   onChange={(e) =>
-                    setAddressForm({
-                      ...addressForm,
-                      phone: e.target.value,
-                    })
+                    setAddressForm({ ...addressForm, phone: e.target.value })
                   }
                   required
                 />
@@ -332,10 +285,7 @@ function Checkout({
                   placeholder="Full Address"
                   value={addressForm.address}
                   onChange={(e) =>
-                    setAddressForm({
-                      ...addressForm,
-                      address: e.target.value,
-                    })
+                    setAddressForm({ ...addressForm, address: e.target.value })
                   }
                   required
                 />
@@ -346,10 +296,7 @@ function Checkout({
                     placeholder="City"
                     value={addressForm.city}
                     onChange={(e) =>
-                      setAddressForm({
-                        ...addressForm,
-                        city: e.target.value,
-                      })
+                      setAddressForm({ ...addressForm, city: e.target.value })
                     }
                     required
                   />
@@ -359,10 +306,7 @@ function Checkout({
                     placeholder="State"
                     value={addressForm.state}
                     onChange={(e) =>
-                      setAddressForm({
-                        ...addressForm,
-                        state: e.target.value,
-                      })
+                      setAddressForm({ ...addressForm, state: e.target.value })
                     }
                     required
                   />
@@ -398,8 +342,126 @@ function Checkout({
                   </button>
                 </div>
               </form>
-            </section>
-          )}
+            )}
+          </section>
+
+          {/* Billing address */}
+          <section className="checkout-address-card">
+            <h2>Billing Address</h2>
+
+            {billingAddress ? (
+              <div className="checkout-saved-address">
+                <strong>{billingAddress.name}</strong>
+                <p>{billingAddress.phone}</p>
+                <p>{billingAddress.address}</p>
+                <p>
+                  {billingAddress.city}, {billingAddress.state} -{" "}
+                  {billingAddress.pincode}
+                </p>
+
+                <button
+                  type="button"
+                  className="checkout-text-btn"
+                  onClick={() => openAddressForm("billing")}
+                >
+                  Change Address
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="checkout-add-address"
+                onClick={() => openAddressForm("billing")}
+              >
+                + Add Billing Address
+              </button>
+            )}
+
+            {showAddressForm === "billing" && (
+              <form onSubmit={saveAddress} className="checkout-address-form">
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={addressForm.name}
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, name: e.target.value })
+                  }
+                  required
+                />
+
+                <input
+                  type="tel"
+                  placeholder="Phone Number"
+                  value={addressForm.phone}
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, phone: e.target.value })
+                  }
+                  required
+                />
+
+                <textarea
+                  placeholder="Full Address"
+                  value={addressForm.address}
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, address: e.target.value })
+                  }
+                  required
+                />
+
+                <div className="checkout-form-row">
+                  <input
+                    type="text"
+                    placeholder="City"
+                    value={addressForm.city}
+                    onChange={(e) =>
+                      setAddressForm({ ...addressForm, city: e.target.value })
+                    }
+                    required
+                  />
+
+                  <input
+                    type="text"
+                    placeholder="State"
+                    value={addressForm.state}
+                    onChange={(e) =>
+                      setAddressForm({ ...addressForm, state: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="Pincode"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  value={addressForm.pincode}
+                  onChange={(e) =>
+                    setAddressForm({
+                      ...addressForm,
+                      pincode: e.target.value.replace(/\D/g, ""),
+                    })
+                  }
+                  required
+                />
+
+                <div className="checkout-form-actions">
+                  <button type="submit" className="checkout-save-btn">
+                    Save Address
+                  </button>
+
+                  <button
+                    type="button"
+                    className="checkout-cancel-btn"
+                    onClick={() => setShowAddressForm("")}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </section>
         </div>
 
         {/* Right section */}

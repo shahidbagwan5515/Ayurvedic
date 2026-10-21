@@ -18,6 +18,9 @@ function Login({ open, onClose }) {
         open={open}
         onClose={onClose}
         className="login-drawer"
+        PaperProps={{
+          className: "login-paper",
+        }}
       >
         <div className="login-container">
           {/* Close Button */}
@@ -36,7 +39,7 @@ function Login({ open, onClose }) {
           </div>
 
           {/* Heading */}
-          <h2>Hello, Welcome Back</h2>
+          <h2>Welcome to Login</h2>
 
           {/* Form */}
           <div className="login-form">
