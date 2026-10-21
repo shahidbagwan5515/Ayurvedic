@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Checkout.css";
 import CardEmp from "../CardEmp";
 
@@ -9,6 +9,7 @@ function Checkout({
   onUpdateQuantity,
   onPlaceOrder,
 }) {
+  const navigate = useNavigate();
   const [discountCode, setDiscountCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [message, setMessage] = useState("");
@@ -57,17 +58,18 @@ function Checkout({
       return;
     }
 
-    if (typeof onPlaceOrder !== "function") {
-      alert("Order functionality is not connected.");
-      return;
-    }
-
-    onPlaceOrder({
-      products: products,
-      total: grandTotal,
+    navigate("/Payment", {
+      state: {
+        products,
+        deliveryAddress,
+        billingAddress,
+        subtotal,
+        discount: validDiscount,
+        deliveryAmount,
+        gst,
+        grandTotal,
+      },
     });
-
-    alert("Order placed successfully!");
   };
 
   // Reset discount if cart subtotal changes.

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import CardEmp from "./CardEmp";
 import "./Mycard.css";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DiscountOutlinedIcon from "@mui/icons-material/DiscountOutlined";
 
 function MyCard({ cartItems = [], onRemove, onUpdateQuantity }) {
   const [discountCode, setDiscountCode] = useState("");

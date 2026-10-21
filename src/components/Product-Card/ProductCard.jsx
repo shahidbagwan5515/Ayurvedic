@@ -13,7 +13,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import FavoriteOutlinedIcon from "@mui/icons-material/FavoriteOutlined";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCartOutlined";
 
-// Keep your complete existing products array here.
 const products = [
   {
     id: 1,

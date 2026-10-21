@@ -19,6 +19,7 @@ import AboutUs from "./components/About Us/AboutUs";
 import Wishlist from "./components/Wishlist/Wishlist";
 import Checkout from "./components/My-card/Checkout/Checkout";
 import OrderHistory from "./components/Wishlist/OrderHistory/OrderHistory";
+import Payment from "./components/Payment/Payment";
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -174,6 +175,10 @@ function App() {
               onPlaceOrder={placeOrder}
             />
           }
+        />
+        <Route
+          path="/Payment"
+          element={<Payment onPlaceOrder={placeOrder} />}
         />
 
         <Route path="/Footer" element={<Footer />} />
