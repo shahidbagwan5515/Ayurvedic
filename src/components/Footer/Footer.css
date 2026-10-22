@@ -13,9 +13,7 @@
   box-sizing: border-box;
 }
 
-/* ================================
-   TOP
-================================ */
+/* FOOTER TOP */
 
 .footer-top {
   width: 92%;
@@ -55,19 +53,7 @@
   border: 1px solid #d5e6d9;
   border-radius: 30px;
   background: #fff;
-}
-
-.footer-trust span {
-  width: 25px;
-  height: 25px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: #198754;
-  color: white;
-  font-size: 13px;
+  color: #198754;
 }
 
 .footer-trust p {
@@ -77,9 +63,7 @@
   font-weight: 600;
 }
 
-/* ================================
-   DIVIDER
-================================ */
+/* DIVIDER */
 
 .footer-line {
   width: 92%;
@@ -88,9 +72,7 @@
   background: #dce8df;
 }
 
-/* ================================
-   FOOTER CONTENT
-================================ */
+/* FOOTER CONTENT */
 
 .footer-content {
   width: 92%;
@@ -99,13 +81,12 @@
   padding: 55px 0;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1.4fr 1.5fr;
-  gap: 45px;
+  gap: 35px;
   align-items: start;
+  min-width: 0;
 }
 
-/* ================================
-   HEADINGS
-================================ */
+/* HEADINGS */
 
 .footer-column h3,
 .footer-newsletter h3 {
@@ -127,35 +108,31 @@
   background: #198754;
 }
 
-/* Hide accordion icon on desktop */
-
 .accordion-icon {
   display: none;
 }
-
-/* Show all section content on desktop */
 
 .footer-accordion-content {
   display: block;
 }
 
-/* ================================
-   LINKS
-================================ */
+/* LINKS */
 
 .footer-column a {
   position: relative;
   display: block;
   width: fit-content;
+  max-width: 100%;
   margin-bottom: 14px;
   color: #68766e;
   text-decoration: none;
   font-size: 15px;
-  line-height: 1.4;
+  line-height: 1.5;
   transition: 0.25s ease;
+  overflow-wrap: anywhere;
 }
 
-.footer-column a::before {
+.footer-column a:not(.contact-detail)::before {
   content: "›";
   position: absolute;
   left: -14px;
@@ -164,24 +141,23 @@
   transition: 0.25s ease;
 }
 
-.footer-column a:hover {
+.footer-column a:not(.contact-detail):hover {
   padding-left: 10px;
   color: #198754;
 }
 
-.footer-column a:hover::before {
+.footer-column a:not(.contact-detail):hover::before {
   opacity: 1;
 }
 
-/* ================================
-   CONTACT
-================================ */
+/* CONTACT */
 
 .contact-item {
   display: flex;
   align-items: flex-start;
   gap: 13px;
   margin-bottom: 20px;
+  min-width: 0;
 }
 
 .contact-icon {
@@ -194,7 +170,10 @@
   border-radius: 10px;
   background: #e2f2e6;
   color: #198754;
-  font-size: 17px;
+}
+
+.contact-icon svg {
+  font-size: 20px;
 }
 
 .contact-item span {
@@ -204,7 +183,8 @@
   font-size: 12px;
 }
 
-.contact-item p {
+.contact-item p,
+.contact-detail {
   margin: 0;
   color: #526159;
   font-size: 14px;
@@ -212,9 +192,19 @@
   overflow-wrap: anywhere;
 }
 
-/* ================================
-   NEWSLETTER
-================================ */
+.footer-column .contact-detail {
+  display: block;
+  width: auto;
+  margin: 0;
+  color: #526159;
+  text-decoration: none;
+}
+
+.footer-column .contact-detail:hover {
+  color: #198754;
+}
+
+/* NEWSLETTER */
 
 .footer-newsletter {
   min-width: 0;
@@ -230,9 +220,7 @@
   line-height: 1.6;
 }
 
-/* ================================
-   NEWSLETTER INPUT
-================================ */
+/* NEWSLETTER INPUT */
 
 .newsletter-box {
   display: flex;
@@ -272,9 +260,7 @@
   background: #146c43;
 }
 
-/* ================================
-   SOCIAL LINKS
-================================ */
+/* SOCIAL LINKS */
 
 .social-links {
   display: flex;
@@ -304,9 +290,7 @@
   transform: translateY(-3px);
 }
 
-/* ================================
-   FOOTER BOTTOM
-================================ */
+/* FOOTER BOTTOM */
 
 .footer-bottom {
   width: 92%;
@@ -329,6 +313,7 @@
 .footer-bottom-links {
   display: flex;
   gap: 22px;
+  flex-wrap: wrap;
 }
 
 .footer-bottom-links a {
@@ -342,9 +327,7 @@
   color: #198754;
 }
 
-/* ================================
-   TABLET + MOBILE ACCORDION
-================================ */
+/* TABLET + MOBILE ACCORDION */
 
 @media (max-width: 1100px) {
   .footer-content {
@@ -374,12 +357,11 @@
   }
 
   .accordion-icon {
-    display: inline-block;
+    display: inline-flex;
     flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
     color: #198754;
-    font-size: 25px;
-    font-weight: 400;
-    line-height: 1;
   }
 
   .footer-accordion-content {
@@ -394,15 +376,9 @@
   .footer-column a {
     width: fit-content;
   }
-
-  .footer-accordion-content .contact-item {
-    margin-bottom: 18px;
-  }
 }
 
-/* ================================
-   TABLET
-================================ */
+/* TABLET */
 
 @media (min-width: 577px) and (max-width: 768px) {
   .footer-top {
@@ -426,9 +402,7 @@
   }
 }
 
-/* ================================
-   MOBILE
-================================ */
+/* MOBILE */
 
 @media (max-width: 576px) {
   .footer {
@@ -489,7 +463,6 @@
 
   .newsletter-box button {
     padding: 10px 12px;
-
   }
 
   .footer-bottom {
@@ -502,6 +475,116 @@
 
   .footer-bottom-links {
     gap: 15px;
-    flex-wrap: wrap;
+  }
+}
+
+/* FLOATING SPEED DIAL */
+
+.footer-speed-dial {
+  position: fixed !important;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1200;
+}
+
+.footer-speed-dial .MuiFab-root {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.footer-speed-dial .MuiFab-root:hover {
+  transform: scale(1.07);
+}
+
+/* CHATBOT WINDOW */
+
+.mui-chat-window {
+  position: fixed;
+  right: 20px;
+  bottom: 230px;
+  z-index: 1199;
+  width: min(350px, calc(100vw - 30px));
+  overflow: hidden;
+  border: 1px solid #dce8df;
+  border-radius: 14px !important;
+  background: #fff;
+}
+
+.mui-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #174d2d;
+  color: #fff;
+}
+
+.mui-chat-header .MuiTypography-caption {
+  color: #e0f0e5;
+}
+
+.mui-chat-body {
+  min-height: 150px;
+  padding: 16px;
+  background: #f5faf6;
+}
+
+.mui-chat-message {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  padding: 12px;
+  border-radius: 4px 14px 14px;
+  background: #fff;
+  color: #53635a;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+.mui-chat-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.mui-chat-options .MuiButton-root {
+  border-color: #198754;
+  color: #198754;
+  font-size: 12px;
+  text-transform: none;
+}
+
+.mui-chat-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  border-top: 1px solid #e2ebe5;
+  background: #fff;
+}
+
+.mui-chat-input .MuiOutlinedInput-root {
+  border-radius: 24px;
+  font-size: 13px;
+}
+
+.mui-chat-input .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: #198754;
+}
+
+/* MOBILE SPEED DIAL + CHATBOT */
+
+@media (max-width: 576px) {
+  .footer-speed-dial {
+    right: 12px;
+    bottom: 80px;
+  }
+
+  .mui-chat-window {
+    right: 12px;
+    bottom: 190px;
+    width: calc(100vw - 24px);
   }
 }

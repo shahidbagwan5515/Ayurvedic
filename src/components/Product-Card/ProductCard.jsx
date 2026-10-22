@@ -98,6 +98,7 @@ function ProductCard({
   onProductClick,
   wishlistItems = [],
   onWishlistChange,
+  onProductsChange,
 }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -110,6 +111,10 @@ function ProductCard({
       return acc;
     }, {}),
   );
+
+  useEffect(() => {
+    onProductsChange?.(products);
+  }, [onProductsChange]);
 
   // Auto-scroll product cards.
   useEffect(() => {
@@ -411,5 +416,5 @@ function ProductCard({
     </>
   );
 }
-
+export { products };
 export default ProductCard;

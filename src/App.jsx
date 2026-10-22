@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import { useState, useEffect, useRef } from "react";
 import Header from "./components/Header/Header";
 import Home from "./components/Home/Home";
 import MyCard from "./components/My-card/MyCard";
@@ -20,11 +19,16 @@ import Wishlist from "./components/Wishlist/Wishlist";
 import Checkout from "./components/My-card/Checkout/Checkout";
 import OrderHistory from "./components/Wishlist/OrderHistory/OrderHistory";
 import Payment from "./components/Payment/Payment";
+// import ProductCard from "./components/Product-Card/ProductCard";
+import ProductCard, {
+  products as productList,
+} from "./components/Product-Card/ProductCard";
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState(productList);
 
   const addToCart = (product) => {
     setCartItems((previous) => {
@@ -91,7 +95,11 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <Header cartItems={cartItems} wishlistItems={wishlistItems} />
+      <Header
+        products={productList}
+        cartItems={cartItems}
+        wishlistItems={wishlistItems}
+      />
       <Routes>
         <Route
           path="/"
@@ -142,6 +150,18 @@ function App() {
           path="/ViewProduct"
           element={
             <ViewProduct
+              onAddToCart={addToCart}
+              wishlistItems={wishlistItems}
+              onWishlistChange={setWishlistItems}
+            />
+          }
+        />
+
+        <Route
+          path="/ProductCard"
+          element={
+            <ProductCard
+              onProductsChange={setProducts}
               onAddToCart={addToCart}
               wishlistItems={wishlistItems}
               onWishlistChange={setWishlistItems}
