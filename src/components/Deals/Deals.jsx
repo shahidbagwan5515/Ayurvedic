@@ -24,6 +24,81 @@ import dealsImg6 from "../../assets/dealsImg6.jpg";
 import BottomBanner1 from "../../assets/dealsbanner1.webp";
 import BottomBanner2 from "../../assets/dealsbanners2.webp";
 
+// IMMUNITY PRODUCTS
+export const immunityProducts = [
+  {
+    id: 1,
+    name: "Dasamularishtam",
+    price: 130,
+    oldPrice: 160,
+    image: dealsImg1,
+    category: "Immunity Booster",
+    description:
+      "Dasamularishtam is an Ayurvedic herbal formulation traditionally used to support immunity and overall wellness.",
+    sizes: ["200ml", "450ml"],
+  },
+
+  {
+    id: 2,
+    name: "Chyavanaprasam",
+    price: 285,
+    oldPrice: 320,
+    image: dealsImg2,
+    category: "Immunity Booster",
+    description:
+      "Chyavanaprasam is a traditional Ayurvedic herbal preparation designed to support immunity, strength and general wellness.",
+    sizes: ["250g", "500g"],
+  },
+
+  {
+    id: 3,
+    name: "Brahma Rasayanam",
+    price: 235,
+    oldPrice: 270,
+    image: dealsImg3,
+    category: "Immunity Booster",
+    description:
+      "Brahma Rasayanam is an Ayurvedic herbal formulation traditionally used for overall health and wellness.",
+    sizes: ["250g", "500g"],
+  },
+
+  {
+    id: 4,
+    name: "Indukanthamritham",
+    price: 180,
+    oldPrice: 210,
+    image: dealsImg4,
+    category: "Immunity Booster",
+    description:
+      "Indukanthamritham is a traditional Ayurvedic formulation used for supporting general wellness.",
+    sizes: ["200ml", "450ml"],
+  },
+
+  {
+    id: 5,
+    name: "C-Health granule",
+    price: 300,
+    oldPrice: 350,
+    image: dealsImg5,
+    category: "Immunity Booster",
+    description:
+      "C-Health granule is an Ayurvedic wellness product formulated for daily health support.",
+    sizes: ["100g", "200g"],
+  },
+
+  {
+    id: 6,
+    name: "Geniekot Syrup",
+    price: 165,
+    oldPrice: 195,
+    image: dealsImg6,
+    category: "Immunity Booster",
+    description:
+      "Geniekot Syrup is an Ayurvedic herbal formulation for supporting general health and wellness.",
+    sizes: ["100ml", "200ml"],
+  },
+];
+
 function Deals({ onAddToCart }) {
   const navigate = useNavigate();
   const [activeSlide, setActiveSlide] = useState(0);
@@ -31,81 +106,6 @@ function Deals({ onAddToCart }) {
 
   // TOP BANNERS
   const banners = [BannerImg1, BannerImg2, BannerImg3];
-
-  // IMMUNITY PRODUCTS
-  const immunityProducts = [
-    {
-      id: 1,
-      name: "Dasamularishtam",
-      price: 130,
-      oldPrice: 160,
-      image: dealsImg1,
-      category: "Immunity Booster",
-      description:
-        "Dasamularishtam is an Ayurvedic herbal formulation traditionally used to support immunity and overall wellness.",
-      sizes: ["200ml", "450ml"],
-    },
-
-    {
-      id: 2,
-      name: "Chyavanaprasam",
-      price: 285,
-      oldPrice: 320,
-      image: dealsImg2,
-      category: "Immunity Booster",
-      description:
-        "Chyavanaprasam is a traditional Ayurvedic herbal preparation designed to support immunity, strength and general wellness.",
-      sizes: ["250g", "500g"],
-    },
-
-    {
-      id: 3,
-      name: "Brahma Rasayanam",
-      price: 235,
-      oldPrice: 270,
-      image: dealsImg3,
-      category: "Immunity Booster",
-      description:
-        "Brahma Rasayanam is an Ayurvedic herbal formulation traditionally used for overall health and wellness.",
-      sizes: ["250g", "500g"],
-    },
-
-    {
-      id: 4,
-      name: "Indukanthamritham",
-      price: 180,
-      oldPrice: 210,
-      image: dealsImg4,
-      category: "Immunity Booster",
-      description:
-        "Indukanthamritham is a traditional Ayurvedic formulation used for supporting general wellness.",
-      sizes: ["200ml", "450ml"],
-    },
-
-    {
-      id: 5,
-      name: "C-Health granule",
-      price: 300,
-      oldPrice: 350,
-      image: dealsImg5,
-      category: "Immunity Booster",
-      description:
-        "C-Health granule is an Ayurvedic wellness product formulated for daily health support.",
-      sizes: ["100g", "200g"],
-    },
-
-    {
-      id: 6,
-      name: "Geniekot Syrup",
-      price: 165,
-      oldPrice: 195,
-      image: dealsImg6,
-      category: "Immunity Booster",
-      description:
-        "Geniekot Syrup is an Ayurvedic herbal formulation for supporting general health and wellness.",
-      sizes: ["100ml", "200ml"],
-    },
-  ];
 
   return (
     <div className="section-deals">

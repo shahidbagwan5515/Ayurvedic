@@ -99,22 +99,35 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
   const location = useLocation();
 
   // Header se search term receive hoga
-  const searchTerm = (location.state?.searchTerm || "").trim().toLowerCase();
+  const selectedFromSearch = location.state?.product;
 
+  const searchTerm = (
+    location.state?.searchTerm ||
+    selectedFromSearch?.name ||
+    ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const allProducts = selectedFromSearch
+    ? [
+        ...products.filter((product) => product.id !== selectedFromSearch.id),
+        selectedFromSearch,
+      ]
+    : products;
+
+  const filteredProducts = searchTerm
+    ? allProducts.filter((product) =>
+        [product.name, product.category, product.description, product.sku]
+          .filter(Boolean)
+          .some((value) => value.toLowerCase().includes(searchTerm)),
+      )
+    : allProducts;
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const [quantities, setQuantities] = useState(
     Object.fromEntries(products.map((product) => [product.id, 1])),
   );
-
-  // Product name, category aur description ke according search
-  const filteredProducts = products.filter((product) => {
-    return (
-      product.name.toLowerCase().includes(searchTerm) ||
-      product.category.toLowerCase().includes(searchTerm) ||
-      product.description.toLowerCase().includes(searchTerm)
-    );
-  });
 
   // Quantity change
   const changeQuantity = (id, amount) => {
@@ -194,7 +207,15 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
                   <article
                     className="view-product-card"
                     key={product.id}
-                    onClick={() => setSelectedProduct(product)}
+                    onClick={() =>
+                      navigate("/ViewProduct", {
+                        state: {
+                          searchTerm: product.name,
+                          productId: product.id,
+                          product,
+                        },
+                      })
+                    }
                     style={{ cursor: "pointer" }}
                   >
                     {/* Product Image */}

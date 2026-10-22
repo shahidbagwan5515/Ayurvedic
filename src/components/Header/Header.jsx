@@ -106,6 +106,22 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
     return searchableText.includes(normalizedSearch);
   });
 
+  const handleSearch = (event) => {
+    event.preventDefault();
+
+    if (!normalizedSearch) return;
+
+    if (filteredProducts.length > 0) {
+      const index =
+        activeSuggestion >= 0 && activeSuggestion < filteredProducts.length
+          ? activeSuggestion
+          : 0;
+
+      selectProduct(filteredProducts[index]);
+    } else {
+      setShowSuggestions(true);
+    }
+  };
   // Close suggestions on outside click
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -135,24 +151,6 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
       },
     });
   };
-
-  const handleSearch = (event) => {
-    event.preventDefault();
-
-    if (!normalizedSearch) return;
-
-    if (filteredProducts.length > 0) {
-      const index =
-        activeSuggestion >= 0 && activeSuggestion < filteredProducts.length
-          ? activeSuggestion
-          : 0;
-
-      selectProduct(filteredProducts[index]);
-    } else {
-      setShowSuggestions(true);
-    }
-  };
-
   const openShopMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -266,7 +264,7 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               <SearchIcon className="search-icon" />
 
               <InputBase
-                placeholder="Search products, categories..."
+                placeholder="Search products"
                 value={searchTerm}
                 onChange={(event) => {
                   setSearchTerm(event.target.value);
@@ -337,7 +335,7 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
                         className={`search-suggestion-item ${
                           activeSuggestion === index ? "active" : ""
                         }`}
-                        key={product.id}
+                        key={`${product.category || "product"}-${product.id}-${index}`}
                         onMouseEnter={() => setActiveSuggestion(index)}
                         onClick={() => selectProduct(product)}
                       >

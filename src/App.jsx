@@ -6,7 +6,7 @@ import MyCard from "./components/My-card/MyCard";
 import Footer from "./components/Footer/Footer";
 import MenuFooter from "./components/Menufooter/MenuFooter";
 import Login from "./components/Login/Login";
-import Deals from "./components/Deals/Deals";
+// import Deals from "./components/Deals/Deals";
 import CardEmp from "./components/My-card/CardEmp";
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 import Contact from "./components/Contact/Contact";
@@ -19,7 +19,7 @@ import Wishlist from "./components/Wishlist/Wishlist";
 import Checkout from "./components/My-card/Checkout/Checkout";
 import OrderHistory from "./components/Wishlist/OrderHistory/OrderHistory";
 import Payment from "./components/Payment/Payment";
-// import ProductCard from "./components/Product-Card/ProductCard";
+import Deals, { immunityProducts } from "./components/Deals/Deals";
 import ProductCard, {
   products as productList,
 } from "./components/Product-Card/ProductCard";
@@ -96,7 +96,7 @@ function App() {
     <BrowserRouter>
       <ScrollToTop />
       <Header
-        products={productList}
+        products={[...productList, ...immunityProducts]}
         cartItems={cartItems}
         wishlistItems={wishlistItems}
       />
