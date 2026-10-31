@@ -23,6 +23,7 @@ import Deals, { immunityProducts } from "./components/Deals/Deals";
 import ProductCard, {
   products as productList,
 } from "./components/Product-Card/ProductCard";
+import Notification from "./components/Notification/Notification";
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -134,6 +135,8 @@ function App() {
         <Route path="/AboutUs" element={<AboutUs />} />
         <Route path="/CardEmp" element={<CardEmp />} />
         <Route path="/Category" element={<Category />} />
+
+        <Route path="/Notification" element={<Notification />} />
 
         <Route
           path="/Wishlist"

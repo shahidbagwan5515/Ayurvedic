@@ -16,6 +16,7 @@ import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import ContactSupportOutlinedIcon from "@mui/icons-material/ContactSupportOutlined";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import NotificationsActiveOutlinedIcon from "@mui/icons-material/NotificationsActiveOutlined";
 
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -33,6 +34,7 @@ import InputBase from "@mui/material/InputBase";
 import Login from "../Login/Login";
 import Companylog from "../../assets/AjitlabLogo.png";
 import Companylog2 from "../../assets/navLog.png";
+import { NotificationsOutlined } from "@mui/icons-material";
 
 const menuItems = [
   { label: "Arishtas and Asavas", link: "/Category" },
@@ -403,6 +405,19 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
                     showZero={false}
                   />
                   <span>My Cart</span>
+                </IconButton>
+              </Link>
+
+              <Link to="/Notification" className="header-action-link">
+                <IconButton aria-label="My Notifications">
+                  <Badge
+                    badgeContent={5}
+                    color="error"
+                    overlap="circular"
+                    showZero={false}
+                  >
+                    <NotificationsOutlined />
+                  </Badge>
                 </IconButton>
               </Link>
 
