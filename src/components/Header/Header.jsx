@@ -17,7 +17,7 @@ import ContactSupportOutlinedIcon from "@mui/icons-material/ContactSupportOutlin
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import NotificationsActiveOutlinedIcon from "@mui/icons-material/NotificationsActiveOutlined";
-
+import ContactPageOutlinedIcon from "@mui/icons-material/ContactPageOutlined";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
@@ -83,6 +83,7 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
 
+  const [showShopCategories, setShowShopCategories] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
@@ -448,7 +449,7 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
       <Drawer anchor="right" open={drawerOpen} onClose={closeDrawer}>
         <Box className="mobile-drawer">
           <div className="drawer-header">
-            <h3>Ayurvedic Store</h3>
+            <h3>Ayurvedic</h3>
             <IconButton onClick={closeDrawer} aria-label="Close mobile menu">
               ×
             </IconButton>
@@ -493,10 +494,9 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               onClick={closeDrawer}
               className="mobile-link"
             >
-              <ContactSupportOutlinedIcon />
+              <ContactPageOutlinedIcon />
               <span>Contact Us</span>
             </ListItem>
-
             <ListItem
               component={Link}
               to="/AboutUs"
@@ -505,6 +505,16 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
             >
               <ContactSupportOutlinedIcon />
               <span>About Us</span>
+            </ListItem>
+
+            <ListItem
+              component={Link}
+              to="/Notification"
+              onClick={closeDrawer}
+              className="mobile-link"
+            >
+              <NotificationsActiveOutlinedIcon />
+              <span>Notification ({cartItems.length})</span>
             </ListItem>
 
             <ListItem
@@ -526,27 +536,41 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               <ShoppingCartIcon />
               <span>My Cart ({cartItems.length})</span>
             </ListItem>
-
-            <ListItem
-              component="button"
-              onClick={openLogin}
-              className="mobile-link"
-            >
-              <PersonOutlinedIcon />
-              <span>Login</span>
-            </ListItem>
           </List>
 
           <Divider />
 
-          <div className="mobile-categories">
-            <h4>Shop by Category</h4>
+          {/* SHOP NOW SIDEBAR */}
+          <div className="mobile-shop-section">
+            <button
+              className="mobile-shop-toggle"
+              onClick={() => setShowShopCategories(!showShopCategories)}
+            >
+              <span>Shop Now</span>
 
-            {menuItems.map((item) => (
-              <Link key={item.link} to={item.link} onClick={closeDrawer}>
-                {item.label}
-              </Link>
-            ))}
+              <KeyboardArrowDownIcon
+                className={
+                  showShopCategories ? "shop-arrow rotate" : "shop-arrow"
+                }
+              />
+            </button>
+
+            {showShopCategories && (
+              <div className="mobile-categories">
+                {menuItems.map((item) => (
+                  <Link
+                    key={item.link}
+                    to={item.link}
+                    onClick={() => {
+                      closeDrawer();
+                      setShowShopCategories(false);
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </Box>
       </Drawer>
