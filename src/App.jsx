@@ -134,7 +134,16 @@ function App() {
 
         <Route path="/AboutUs" element={<AboutUs />} />
         <Route path="/CardEmp" element={<CardEmp />} />
-        <Route path="/Category" element={<Category />} />
+        <Route
+          path="/Category"
+          element={
+            <Category
+              onAddToCart={addToCart}
+              wishlistItems={wishlistItems}
+              onWishlistChange={setWishlistItems}
+            />
+          }
+        />
 
         <Route path="/Notification" element={<Notification />} />
 

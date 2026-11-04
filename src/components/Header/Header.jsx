@@ -449,7 +449,7 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
       <Drawer anchor="right" open={drawerOpen} onClose={closeDrawer}>
         <Box className="mobile-drawer">
           <div className="drawer-header">
-            <h3>Ayurvedic</h3>
+            <h3>Ayurvedic </h3>
             <IconButton onClick={closeDrawer} aria-label="Close mobile menu">
               ×
             </IconButton>

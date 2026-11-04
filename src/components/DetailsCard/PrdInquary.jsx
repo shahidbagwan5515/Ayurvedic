@@ -1,32 +1,29 @@
 import { useState } from "react";
 import "./PrdInquary.css";
 import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
+
 function PrdInquary({ product, onBack, onAddToCart }) {
   const [quantity, setQuantity] = useState(1);
-  const [size, setSize] = useState(product.sizes?.[0] || "");
-
-  const handleBuyNow = () => {
-    const productToCart = {
-      ...product,
-      quantity: quantity,
-      selectedSize: size,
-    };
-
-    onAddToCart(productToCart);
-
-    alert("Product added successfully!");
-  };
+  const [size, setSize] = useState(product.sizes?.[0] || product.qty || "");
 
   const handleAddToCart = () => {
-    const productToCart = {
+    onAddToCart({
       ...product,
-      quantity: quantity,
+      quantity,
       selectedSize: size,
-    };
-
-    onAddToCart(productToCart);
+    });
 
     alert("Product added to cart!");
+  };
+
+  const handleBuyNow = () => {
+    onAddToCart({
+      ...product,
+      quantity,
+      selectedSize: size,
+    });
+
+    alert("Product added successfully!");
   };
 
   return (
@@ -36,31 +33,32 @@ function PrdInquary({ product, onBack, onAddToCart }) {
       </button>
 
       <div className="product-detail-card">
-        {/* Product Image */}
         <div className="product-detail-image">
           <img src={product.image} alt={product.name} />
         </div>
 
-        {/* Product Details */}
         <div className="product-info">
           <span className="product-category">{product.category}</span>
 
           <h2>{product.name}</h2>
 
-          <p className="description">{product.description}</p>
+          <p className="description">
+            {product.description || "Traditional Ayurvedic herbal formulation."}
+          </p>
 
           <div className="price">
-            ₹{product.price}
-            <span>₹{product.oldPrice}</span>
+            ₹{Number(product.price).toFixed(2)}
+            {product.oldPrice && (
+              <span>₹{Number(product.oldPrice).toFixed(2)}</span>
+            )}
           </div>
 
-          {/* Size */}
-          {product.sizes?.length > 0 && (
+          {(product.sizes?.length > 0 || product.qty) && (
             <div className="product-option">
               <label>Size</label>
 
               <div className="size-options">
-                {product.sizes.map((item) => (
+                {(product.sizes || [product.qty]).map((item) => (
                   <button
                     key={item}
                     className={size === item ? "active" : ""}
@@ -73,7 +71,6 @@ function PrdInquary({ product, onBack, onAddToCart }) {
             </div>
           )}
 
-          {/* Quantity */}
           <div className="product-option">
             <label>Quantity</label>
 
@@ -88,13 +85,23 @@ function PrdInquary({ product, onBack, onAddToCart }) {
             </div>
           </div>
 
-          <p className="stock">✓ In Stock</p>
+          <p className="stock">
+            {product.stock ? "✓ In Stock" : "✕ Out of Stock"}
+          </p>
 
-          <button className="add-cart-dels" onClick={handleAddToCart}>
+          <button
+            className="add-cart-dels"
+            disabled={!product.stock}
+            onClick={handleAddToCart}
+          >
             Add to Cart
           </button>
 
-          <button className="buy-now" onClick={handleBuyNow}>
+          <button
+            className="buy-now"
+            disabled={!product.stock}
+            onClick={handleBuyNow}
+          >
             Buy Now
           </button>
         </div>
