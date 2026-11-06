@@ -1,12 +1,12 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useState } from "react";
+
 import Header from "./components/Header/Header";
 import Home from "./components/Home/Home";
 import MyCard from "./components/My-card/MyCard";
 import Footer from "./components/Footer/Footer";
 import MenuFooter from "./components/Menufooter/MenuFooter";
 import Login from "./components/Login/Login";
-// import Deals from "./components/Deals/Deals";
 import CardEmp from "./components/My-card/CardEmp";
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 import Contact from "./components/Contact/Contact";
@@ -20,17 +20,22 @@ import Checkout from "./components/My-card/Checkout/Checkout";
 import OrderHistory from "./components/Wishlist/OrderHistory/OrderHistory";
 import Payment from "./components/Payment/Payment";
 import Deals, { immunityProducts } from "./components/Deals/Deals";
-import ProductCard, {
-  products as productList,
-} from "./components/Product-Card/ProductCard";
+import ProductCard from "./components/Product-Card/ProductCard";
 import Notification from "./components/Notification/Notification";
+import Signup from "./components/Signup/Signup";
 
-function App() {
+function AppLayout() {
+  const location = useLocation();
+
+  // Only Signup page par Header aur Footer hide honge
+  const hideHeaderFooter = location.pathname === "/Signup";
+
   const [cartItems, setCartItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState(productList);
+  const [products, setProducts] = useState([]);
 
+  // Add to cart
   const addToCart = (product) => {
     setCartItems((previous) => {
       const existing = previous.find((item) => item.id === product.id);
@@ -58,10 +63,12 @@ function App() {
     });
   };
 
+  // Remove from cart
   const removeFromCart = (id) => {
     setCartItems((previous) => previous.filter((product) => product.id !== id));
   };
 
+  // Update cart quantity
   const updateCartQuantity = (id, quantity) => {
     setCartItems((previous) =>
       previous.map((item) =>
@@ -72,6 +79,7 @@ function App() {
     );
   };
 
+  // Place order
   const placeOrder = (orderData) => {
     const newOrder = {
       id: `ORD-${Date.now()}`,
@@ -93,14 +101,20 @@ function App() {
     setOrders((previous) => [newOrder, ...previous]);
     setCartItems([]);
   };
+
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTop />
-      <Header
-        products={[...productList, ...immunityProducts]}
-        cartItems={cartItems}
-        wishlistItems={wishlistItems}
-      />
+
+      {/* Header - Signup par hide */}
+      {!hideHeaderFooter && (
+        <Header
+          products={[...products, ...immunityProducts]}
+          cartItems={cartItems}
+          wishlistItems={wishlistItems}
+        />
+      )}
+
       <Routes>
         <Route
           path="/"
@@ -109,6 +123,7 @@ function App() {
               onAddToCart={addToCart}
               wishlistItems={wishlistItems}
               onWishlistChange={setWishlistItems}
+              onProductsChange={setProducts}
             />
           }
         />
@@ -120,20 +135,26 @@ function App() {
               onAddToCart={addToCart}
               wishlistItems={wishlistItems}
               onWishlistChange={setWishlistItems}
+              onProductsChange={setProducts}
             />
           }
         />
+        <Route path="/Signup" element={<Signup />} />
 
         <Route path="/Login" element={<Login />} />
 
         <Route path="/deals" element={<Deals onAddToCart={addToCart} />} />
 
         <Route path="/contact" element={<Contact />} />
+
         <Route path="/Blog" element={<Blog />} />
+
         <Route path="/blog/:id" element={<BlogDetails />} />
 
         <Route path="/AboutUs" element={<AboutUs />} />
+
         <Route path="/CardEmp" element={<CardEmp />} />
+
         <Route
           path="/Category"
           element={
@@ -158,6 +179,7 @@ function App() {
             />
           }
         />
+
         <Route
           path="/ViewProduct"
           element={
@@ -208,6 +230,7 @@ function App() {
             />
           }
         />
+
         <Route
           path="/Payment"
           element={<Payment onPlaceOrder={placeOrder} />}
@@ -223,6 +246,7 @@ function App() {
         />
 
         <Route path="/about" element={<h1>About Us</h1>} />
+
         <Route path="/privacy-policy" element={<h1>Privacy Policy</h1>} />
 
         <Route
@@ -231,11 +255,28 @@ function App() {
         />
 
         <Route path="/terms" element={<h1>Terms &amp; Conditions</h1>} />
+
         <Route path="/refund-policy" element={<h1>Refund Policy</h1>} />
+
         <Route path="/publications" element={<h1>Publications</h1>} />
       </Routes>
-      <Footer />
-      <MenuFooter cartItems={cartItems} wishlistItems={wishlistItems} />
+
+      {/* Footer and MenuFooter - Signup par hide */}
+      {!hideHeaderFooter && (
+        <>
+          <Footer />
+
+          <MenuFooter cartItems={cartItems} wishlistItems={wishlistItems} />
+        </>
+      )}
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppLayout />
     </BrowserRouter>
   );
 }

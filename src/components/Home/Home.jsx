@@ -212,7 +212,12 @@ const steps = [
 
 const banners = [BannerImg1, BannerImg2, BannerImg3];
 
-function Home({ onAddToCart, wishlistItems, onWishlistChange }) {
+function Home({
+  onAddToCart,
+  wishlistItems,
+  onWishlistChange,
+  onProductsChange,
+}) {
   const navigate = useNavigate();
   const [activeSlide, setActiveSlide] = useState(0);
   const [active, setActive] = useState(0);
@@ -477,6 +482,7 @@ function Home({ onAddToCart, wishlistItems, onWishlistChange }) {
                 onAddToCart={onAddToCart}
                 wishlistItems={wishlistItems}
                 onWishlistChange={onWishlistChange}
+                onProductsChange={onProductsChange}
               />
             </div>
           </div>
@@ -558,6 +564,7 @@ function Home({ onAddToCart, wishlistItems, onWishlistChange }) {
                 onAddToCart={onAddToCart}
                 wishlistItems={wishlistItems}
                 onWishlistChange={onWishlistChange}
+                onProductsChange={onProductsChange}
               />
             </div>
           </div>
