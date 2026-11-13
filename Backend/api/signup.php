@@ -1,4 +1,3 @@
-
 <?php
 
 // ========================================
@@ -7,7 +6,9 @@
 
 $allowedOrigins = [
   "http://localhost:5173",
-  "http://127.0.0.1:5173"
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5174"
 ];
 
 $origin = $_SERVER["HTTP_ORIGIN"] ?? "";
@@ -21,7 +22,6 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
-// OPTIONS REQUEST
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
   http_response_code(200);
   exit;
@@ -213,5 +213,3 @@ if ($stmt->execute()) {
     500
   );
 }
-
-?>

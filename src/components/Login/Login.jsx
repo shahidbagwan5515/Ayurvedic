@@ -8,8 +8,7 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
 import "./Login.css";
 
-const API_URL =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/login.php";
+const API_URL = "https://plyexpert.com/shaheedApis/Backend-web/api/login.php";
 
 function Login({ open, onClose }) {
   const navigate = useNavigate();
@@ -38,23 +37,14 @@ function Login({ open, onClose }) {
   // LOGIN SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setError("");
 
     const email = form.email.trim().toLowerCase();
     const password = form.password;
 
-    if (!email) {
-      setError("Please enter your email address.");
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-
-    if (!password) {
-      setError("Please enter your password.");
+    if (!email || !password) {
+      setError("Please enter email and password.");
       return;
     }
 
@@ -72,14 +62,19 @@ function Login({ open, onClose }) {
         }),
       });
 
-      const result = await response.json();
+      const data = await response.json();
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Login failed.");
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Email or password is incorrect.");
       }
 
-      alert("Login successful! Welcome " + result.data.name);
+      // SAVE USER DATA
+      localStorage.setItem("loggedInUser", JSON.stringify(data.data));
 
+      // UPDATE HEADER
+      window.dispatchEvent(new Event("authChanged"));
+
+      // RESET FORM
       setForm({
         email: "",
         password: "",
@@ -87,12 +82,17 @@ function Login({ open, onClose }) {
 
       setShowPassword(false);
 
+      // SUCCESS
+      alert("Login successful! Welcome " + data.data.name);
+
       if (onClose) {
         onClose();
       }
 
       navigate("/", { replace: true });
     } catch (err) {
+      console.error("Login Error:", err);
+
       setError(err.message || "Server connection failed.");
     } finally {
       setLoading(false);

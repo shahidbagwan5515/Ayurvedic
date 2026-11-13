@@ -431,6 +431,26 @@ input {
   font-weight: 700;
 }
 
+.login-action {
+  color: #287a46 !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  white-space: nowrap;
+}
+
+.login-action:hover {
+  background: #edf7ef !important;
+}
+
+.login-action span {
+  font-size: 14px;
+}
+
+.MuiMenu-paper {
+  min-width: 190px;
+  border-radius: 10px !important;
+}
+
 .sidebar-btn {
   display: none;
 }

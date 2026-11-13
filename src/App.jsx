@@ -1,5 +1,10 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useState } from "react";
+
+import { useState, useEffect, useCallback } from "react";
+
+// ==========================================
+// COMPONENT IMPORTS
+// ==========================================
 
 import Header from "./components/Header/Header";
 import Home from "./components/Home/Home";
@@ -24,25 +29,74 @@ import ProductCard from "./components/Product-Card/ProductCard";
 import Notification from "./components/Notification/Notification";
 import Signup from "./components/Signup/Signup";
 
+// ==========================================
+// WISHLIST API
+// ==========================================
+
+const WISHLIST_API =
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/wishlist.php";
+
+// ==========================================
+// GUEST TOKEN
+// ==========================================
+
+const getGuestToken = () => {
+  let token = localStorage.getItem("guest_token");
+
+  if (!token) {
+    const randomId = window.crypto?.randomUUID
+      ? window.crypto.randomUUID()
+      : Date.now() + "_" + Math.random().toString(36).slice(2);
+
+    token = "guest_" + randomId;
+
+    localStorage.setItem("guest_token", token);
+  }
+
+  return token;
+};
+
+// ==========================================
+// APP LAYOUT
+// ==========================================
+
 function AppLayout() {
   const location = useLocation();
 
-  // Only Signup page par Header aur Footer hide honge
+  // Hide Header and Footer on Signup page
   const hideHeaderFooter = location.pathname === "/Signup";
 
+  // ========================================
+  // GLOBAL STATES
+  // ========================================
+
   const [cartItems, setCartItems] = useState([]);
+
   const [wishlistItems, setWishlistItems] = useState([]);
+
   const [orders, setOrders] = useState([]);
+
   const [products, setProducts] = useState([]);
 
-  // Add to cart
-  const addToCart = (product) => {
+  const [wishlistLoaded, setWishlistLoaded] = useState(false);
+
+  const [guestToken] = useState(getGuestToken);
+
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("user"));
+
+  // ========================================
+  // ADD TO CART
+  // ========================================
+
+  const addToCart = useCallback((product) => {
     setCartItems((previous) => {
-      const existing = previous.find((item) => item.id === product.id);
+      const existing = previous.find(
+        (item) => String(item.id) === String(product.id),
+      );
 
       if (existing) {
         return previous.map((item) =>
-          item.id === product.id
+          String(item.id) === String(product.id)
             ? {
                 ...item,
                 quantity:
@@ -61,36 +115,209 @@ function AppLayout() {
         },
       ];
     });
-  };
+  }, []);
 
-  // Remove from cart
-  const removeFromCart = (id) => {
-    setCartItems((previous) => previous.filter((product) => product.id !== id));
-  };
+  // ========================================
+  // REMOVE FROM CART
+  // ========================================
 
-  // Update cart quantity
-  const updateCartQuantity = (id, quantity) => {
+  const removeFromCart = useCallback((id) => {
+    setCartItems((previous) =>
+      previous.filter((product) => String(product.id) !== String(id)),
+    );
+  }, []);
+
+  // ========================================
+  // UPDATE CART QUANTITY
+  // ========================================
+
+  const updateCartQuantity = useCallback((id, quantity) => {
     setCartItems((previous) =>
       previous.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, Number(quantity) || 1) }
+        String(item.id) === String(id)
+          ? {
+              ...item,
+              quantity: Math.max(1, Number(quantity) || 1),
+            }
           : item,
       ),
     );
-  };
+  }, []);
 
-  // Place order
-  const placeOrder = (orderData) => {
+  // ========================================
+  // FETCH WISHLIST FROM DATABASE
+  // ========================================
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchWishlist = async () => {
+      try {
+        const response = await fetch(
+          `${WISHLIST_API}?guest_token=${encodeURIComponent(guestToken)}`,
+          {
+            method: "GET",
+            signal: controller.signal,
+          },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to fetch wishlist.");
+        }
+
+        if (!Array.isArray(result.data)) {
+          throw new Error("Invalid wishlist data.");
+        }
+
+        setWishlistItems(result.data);
+        setWishlistLoaded(true);
+
+        console.log("Wishlist loaded successfully:", result.data);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Wishlist Fetch Error:", error);
+        }
+      }
+    };
+
+    fetchWishlist();
+
+    return () => {
+      controller.abort();
+    };
+  }, [guestToken]);
+
+  // ========================================
+  // UPDATE WISHLIST
+  // Supports both array and function updates
+  // ========================================
+
+  const updateWishlist = useCallback((value) => {
+    setWishlistItems((previous) => {
+      const updatedItems =
+        typeof value === "function" ? value(previous) : value;
+
+      return Array.isArray(updatedItems) ? updatedItems : previous;
+    });
+  }, []);
+
+  // ========================================
+  // SAVE WISHLIST TO DATABASE
+  // ========================================
+
+  useEffect(() => {
+    // Wait until initial database fetch finishes.
+    if (!wishlistLoaded) return;
+
+    const controller = new AbortController();
+
+    const saveWishlist = async () => {
+      try {
+        const response = await fetch(
+          `${WISHLIST_API}?guest_token=${encodeURIComponent(guestToken)}`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              items: wishlistItems,
+            }),
+
+            signal: controller.signal,
+          },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Wishlist save failed.");
+        }
+
+        console.log("Wishlist saved successfully:", result.data);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Wishlist Save Error:", error);
+        }
+      }
+    };
+
+    // Small delay to combine rapid wishlist changes.
+    const timer = setTimeout(saveWishlist, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [wishlistItems, wishlistLoaded, guestToken]);
+
+  // ========================================
+  // TOGGLE WISHLIST
+  // ADD / REMOVE PRODUCT
+  // ========================================
+
+  const toggleWishlist = useCallback(
+    (product) => {
+      updateWishlist((previous) => {
+        const exists = previous.some(
+          (item) => String(item.id) === String(product.id),
+        );
+
+        if (exists) {
+          return previous.filter(
+            (item) => String(item.id) !== String(product.id),
+          );
+        }
+
+        return [
+          ...previous,
+          {
+            ...product,
+            inStock: product.inStock ?? Number(product.stock) > 0,
+          },
+        ];
+      });
+    },
+    [updateWishlist],
+  );
+
+  // ========================================
+  // REMOVE FROM WISHLIST
+  // ========================================
+
+  const removeFromWishlist = useCallback(
+    (id) => {
+      updateWishlist((previous) =>
+        previous.filter((item) => String(item.id) !== String(id)),
+      );
+    },
+    [updateWishlist],
+  );
+
+  // ========================================
+  // PLACE ORDER
+  // ========================================
+
+  const placeOrder = useCallback((orderData) => {
     const newOrder = {
       id: `ORD-${Date.now()}`,
+
       date: new Date().toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "short",
         year: "numeric",
       }),
+
       status: "Processing",
+
       payment: "Paid",
+
       total: orderData.total,
+
       products: orderData.products.map((product) => ({
         ...product,
         quantity: Number(product.quantity) || 1,
@@ -99,30 +326,50 @@ function AppLayout() {
     };
 
     setOrders((previous) => [newOrder, ...previous]);
+
     setCartItems([]);
-  };
+  }, []);
+
+  // ========================================
+  // HEADER PROPS
+  // ========================================
+
+  const headerProducts = [...products, ...immunityProducts];
+
+  // ========================================
+  // APP UI
+  // ========================================
 
   return (
     <>
       <ScrollToTop />
 
-      {/* Header - Signup par hide */}
+      {/* ==================================
+          HEADER
+      ================================== */}
+
       {!hideHeaderFooter && (
         <Header
-          products={[...products, ...immunityProducts]}
+          products={headerProducts}
           cartItems={cartItems}
           wishlistItems={wishlistItems}
         />
       )}
 
+      {/* ==================================
+          ROUTES
+      ================================== */}
+
       <Routes>
+        {/* HOME */}
+
         <Route
           path="/"
           element={
             <Home
               onAddToCart={addToCart}
               wishlistItems={wishlistItems}
-              onWishlistChange={setWishlistItems}
+              onWishlistChange={updateWishlist}
               onProductsChange={setProducts}
             />
           }
@@ -134,26 +381,52 @@ function AppLayout() {
             <Home
               onAddToCart={addToCart}
               wishlistItems={wishlistItems}
-              onWishlistChange={setWishlistItems}
+              onWishlistChange={updateWishlist}
               onProductsChange={setProducts}
             />
           }
         />
+
+        {/* SIGNUP */}
+
         <Route path="/Signup" element={<Signup />} />
+
+        {/* LOGIN */}
 
         <Route path="/Login" element={<Login />} />
 
-        <Route path="/deals" element={<Deals onAddToCart={addToCart} />} />
+        {/* DEALS */}
+
+        <Route
+          path="/deals"
+          element={
+            <Deals
+              onAddToCart={addToCart}
+              wishlistItems={wishlistItems}
+              onWishlistChange={updateWishlist}
+            />
+          }
+        />
+
+        {/* CONTACT */}
 
         <Route path="/contact" element={<Contact />} />
+
+        {/* BLOG */}
 
         <Route path="/Blog" element={<Blog />} />
 
         <Route path="/blog/:id" element={<BlogDetails />} />
 
+        {/* ABOUT */}
+
         <Route path="/AboutUs" element={<AboutUs />} />
 
+        {/* CARD */}
+
         <Route path="/CardEmp" element={<CardEmp />} />
+
+        {/* CATEGORY */}
 
         <Route
           path="/Category"
@@ -161,24 +434,31 @@ function AppLayout() {
             <Category
               onAddToCart={addToCart}
               wishlistItems={wishlistItems}
-              onWishlistChange={setWishlistItems}
+              onWishlistChange={updateWishlist}
             />
           }
         />
 
+        {/* NOTIFICATION */}
+
         <Route path="/Notification" element={<Notification />} />
+
+        {/* WISHLIST */}
 
         <Route
           path="/Wishlist"
           element={
             <Wishlist
               wishlistItems={wishlistItems}
-              onWishlistChange={setWishlistItems}
+              onWishlistChange={updateWishlist}
               onAddToCart={addToCart}
+              onRemoveFromWishlist={removeFromWishlist}
               orders={orders}
             />
           }
         />
+
+        {/* VIEW PRODUCT */}
 
         <Route
           path="/ViewProduct"
@@ -186,10 +466,12 @@ function AppLayout() {
             <ViewProduct
               onAddToCart={addToCart}
               wishlistItems={wishlistItems}
-              onWishlistChange={setWishlistItems}
+              onWishlistChange={updateWishlist}
             />
           }
         />
+
+        {/* PRODUCT CARD */}
 
         <Route
           path="/ProductCard"
@@ -198,15 +480,19 @@ function AppLayout() {
               onProductsChange={setProducts}
               onAddToCart={addToCart}
               wishlistItems={wishlistItems}
-              onWishlistChange={setWishlistItems}
+              onWishlistChange={updateWishlist}
             />
           }
         />
+
+        {/* ORDER HISTORY */}
 
         <Route
           path="/OrderHistory"
           element={<OrderHistory orders={orders} />}
         />
+
+        {/* MY CART */}
 
         <Route
           path="/Mycard"
@@ -218,6 +504,8 @@ function AppLayout() {
             />
           }
         />
+
+        {/* CHECKOUT */}
 
         <Route
           path="/Checkout"
@@ -231,12 +519,18 @@ function AppLayout() {
           }
         />
 
+        {/* PAYMENT */}
+
         <Route
           path="/Payment"
           element={<Payment onPlaceOrder={placeOrder} />}
         />
 
+        {/* FOOTER */}
+
         <Route path="/Footer" element={<Footer />} />
+
+        {/* MOBILE FOOTER */}
 
         <Route
           path="/MenuFooter"
@@ -244,6 +538,8 @@ function AppLayout() {
             <MenuFooter cartItems={cartItems} wishlistItems={wishlistItems} />
           }
         />
+
+        {/* STATIC PAGES */}
 
         <Route path="/about" element={<h1>About Us</h1>} />
 
@@ -261,7 +557,10 @@ function AppLayout() {
         <Route path="/publications" element={<h1>Publications</h1>} />
       </Routes>
 
-      {/* Footer and MenuFooter - Signup par hide */}
+      {/* ==================================
+          FOOTER
+      ================================== */}
+
       {!hideHeaderFooter && (
         <>
           <Footer />
@@ -272,6 +571,10 @@ function AppLayout() {
     </>
   );
 }
+
+// ==========================================
+// MAIN APP
+// ==========================================
 
 function App() {
   return (

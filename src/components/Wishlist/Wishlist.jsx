@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./Wishlist.css";
 
@@ -12,8 +11,40 @@ import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import ImportContactsOutlinedIcon from "@mui/icons-material/ImportContactsOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+
 import Login from "../Login/Login";
 import OrderHistory from "./OrderHistory/OrderHistory";
+
+// ==========================================
+// API CONFIGURATION
+// ==========================================
+
+const API_URL =
+  "https://plyexpert.com/shaheedApis/Backend-web/api/wishlist.php";
+
+// ==========================================
+// GUEST TOKEN
+// ==========================================
+
+const getGuestToken = () => {
+  let token = localStorage.getItem("guest_token");
+
+  if (!token) {
+    token =
+      "guest_" +
+      (window.crypto?.randomUUID
+        ? window.crypto.randomUUID()
+        : Date.now() + "_" + Math.random().toString(36).slice(2));
+
+    localStorage.setItem("guest_token", token);
+  }
+
+  return token;
+};
+
+// ==========================================
+// WISHLIST COMPONENT
+// ==========================================
 
 function Wishlist({
   wishlistItems = [],
@@ -22,30 +53,156 @@ function Wishlist({
   orders = [],
 }) {
   const [activeTab, setActiveTab] = useState("Wishlist");
+
   const [cartMessage, setCartMessage] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  const [loginOpen, setLoginOpen] = React.useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
 
-  // Remove product from shared wishlist state.
-  const removeFromWishlist = (id) => {
-    onWishlistChange((previous) => previous.filter((item) => item.id !== id));
+  const [guestToken] = useState(getGuestToken);
 
-    setCartMessage("Product removed from wishlist.");
+  const [wishlistLoaded, setWishlistLoaded] = useState(false);
+  const [wishlistReady, setWishlistReady] = useState(false);
+
+  const [loadError, setLoadError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
+
+  // ==========================================
+  // FETCH WISHLIST FROM DATABASE
+  // ==========================================
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchWishlist = async () => {
+      try {
+        setLoadError("");
+
+        const response = await fetch(
+          `${API_URL}?guest_token=${encodeURIComponent(guestToken)}`,
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to fetch wishlist.");
+        }
+
+        if (!Array.isArray(result.data)) {
+          throw new Error("Invalid wishlist response.");
+        }
+
+        if (isMounted) {
+          onWishlistChange(result.data);
+
+          // Database saving starts after successful fetching.
+          setWishlistReady(true);
+        }
+      } catch (error) {
+        console.error("Wishlist Fetch Error:", error);
+
+        if (isMounted) {
+          setLoadError(error.message || "Wishlist loading failed.");
+          setWishlistReady(false);
+        }
+      } finally {
+        if (isMounted) {
+          setWishlistLoaded(true);
+        }
+      }
+    };
+
+    fetchWishlist();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [guestToken, retryCount, onWishlistChange]);
+
+  // ==========================================
+  // SAVE WISHLIST TO DATABASE
+  // ==========================================
+
+  useEffect(() => {
+    if (!wishlistReady) return;
+
+    const controller = new AbortController();
+
+    const saveWishlist = async () => {
+      try {
+        const response = await fetch(
+          `${API_URL}?guest_token=${encodeURIComponent(guestToken)}`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              items: wishlistItems,
+            }),
+
+            signal: controller.signal,
+          },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to save wishlist.");
+        }
+
+        console.log("Wishlist saved successfully:", result.data);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Wishlist Save Error:", error);
+        }
+      }
+    };
+
+    saveWishlist();
+
+    return () => {
+      controller.abort();
+    };
+  }, [wishlistItems, wishlistReady, guestToken]);
+
+  // ==========================================
+  // SHOW MESSAGE
+  // ==========================================
+
+  const showMessage = (message) => {
+    setCartMessage(message);
     setSnackbarOpen(true);
   };
 
-  // Move product to cart, then remove it from wishlist.
+  // ==========================================
+  // REMOVE FROM WISHLIST
+  // ==========================================
+
+  const removeFromWishlist = (id) => {
+    if (typeof onWishlistChange !== "function") return;
+
+    onWishlistChange((previous) =>
+      previous.filter((item) => String(item.id) !== String(id)),
+    );
+
+    showMessage("Product removed from wishlist.");
+  };
+
+  // ==========================================
+  // MOVE PRODUCT TO CART
+  // ==========================================
+
   const moveToCart = (product) => {
     if (!product.inStock) {
-      setCartMessage("This product is out of stock.");
-      setSnackbarOpen(true);
+      showMessage("This product is out of stock.");
       return;
     }
 
     if (typeof onAddToCart !== "function") {
-      setCartMessage("Cart functionality is not connected.");
-      setSnackbarOpen(true);
+      showMessage("Cart functionality is not connected.");
       return;
     }
 
@@ -56,16 +213,15 @@ function Wishlist({
     });
 
     onWishlistChange((previous) =>
-      previous.filter((item) => item.id !== product.id),
+      previous.filter((item) => String(item.id) !== String(product.id)),
     );
 
-    setCartMessage(`${product.name} moved to cart successfully!`);
-    setSnackbarOpen(true);
+    showMessage(`${product.name} moved to cart successfully!`);
   };
 
-  const handleLogout = () => {
-    window.location.href = "/login";
-  };
+  // ==========================================
+  // SIDEBAR MENU
+  // ==========================================
 
   const menuItems = [
     { name: "My Account", icon: "user" },
@@ -74,15 +230,37 @@ function Wishlist({
     { name: "Address Book", icon: "book" },
   ];
 
+  // ==========================================
+  // RETRY WISHLIST
+  // ==========================================
+
+  const retryWishlist = () => {
+    setWishlistLoaded(false);
+    setWishlistReady(false);
+    setLoadError("");
+
+    setRetryCount((previous) => previous + 1);
+  };
+
+  // ==========================================
+  // UI
+  // ==========================================
+
   return (
     <div className="account-page">
+      {/* BREADCRUMB */}
+
       <div className="account-breadcrumb">
         <Link to="/">Home</Link>
+
         <span className="breadcrumb-chevron">›</span>
+
         <span>{activeTab}</span>
       </div>
 
       <div className="account-layout">
+        {/* SIDEBAR */}
+
         <aside className="account-sidebar">
           {menuItems.map((item) => (
             <button
@@ -100,15 +278,21 @@ function Wishlist({
             >
               <span className="account-menu-icon">
                 {item.icon === "user" && <PersonOutlinedIcon />}
+
                 {item.icon === "box" && <ShoppingBagOutlinedIcon />}
+
                 {item.icon === "heart" && <FavoriteBorderOutlinedIcon />}
+
                 {item.icon === "book" && <ImportContactsOutlinedIcon />}
               </span>
 
               <span>{item.name}</span>
+
               <span className="menu-arrow">›</span>
             </button>
           ))}
+
+          {/* LOGOUT */}
 
           <button
             type="button"
@@ -116,51 +300,93 @@ function Wishlist({
             onClick={() => setLoginOpen(true)}
           >
             <LogoutOutlinedIcon />
+
             <span>Logout</span>
+
             <span className="menu-arrow">›</span>
           </button>
         </aside>
 
+        {/* MAIN CONTENT */}
+
         <main className="wishlist-content" key={activeTab}>
           <h1>{activeTab}</h1>
+
+          {/* MY ACCOUNT */}
 
           {activeTab === "My Account" && (
             <div className="account-tab-body">
               <div className="account-welcome-icon">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <circle cx="12" cy="8" r="4" />
+
                   <path d="M4.5 21c0-4.5 3-7 7.5-7s7.5 2.5 7.5 7" />
                 </svg>
               </div>
 
               <h2>Welcome to My Account</h2>
+
               <p>Manage your profile and account details here.</p>
             </div>
           )}
 
-          {activeTab === "Orders History" && (
-            // <div className="account-tab-body">
-            <OrderHistory orders={orders} />
-            // </div>
-          )}
+          {/* ORDER HISTORY */}
+
+          {activeTab === "Orders History" && <OrderHistory orders={orders} />}
+
+          {/* ADDRESS BOOK */}
 
           {activeTab === "Address Book" && (
             <div className="account-tab-body">
               <div className="account-empty-icon">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
+
                   <circle cx="12" cy="10" r="2.5" />
                 </svg>
               </div>
 
               <h2>No saved addresses</h2>
+
               <p>Your saved delivery addresses will appear here.</p>
             </div>
           )}
 
+          {/* WISHLIST */}
+
           {activeTab === "Wishlist" && (
             <>
-              {wishlistItems.length === 0 ? (
+              {/* LOADING */}
+
+              {!wishlistLoaded && (
+                <div className="account-tab-body">
+                  <h2>Loading wishlist...</h2>
+
+                  <p>Please wait while we fetch your saved products.</p>
+                </div>
+              )}
+
+              {/* ERROR */}
+
+              {wishlistLoaded && loadError && (
+                <div className="account-tab-body">
+                  <h2>Unable to load wishlist</h2>
+
+                  <p>{loadError}</p>
+
+                  <button
+                    type="button"
+                    className="wishlist-shop-btn"
+                    onClick={retryWishlist}
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+
+              {/* EMPTY WISHLIST */}
+
+              {wishlistLoaded && !loadError && wishlistItems.length === 0 && (
                 <div className="account-tab-body">
                   <div className="account-empty-icon">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -169,16 +395,23 @@ function Wishlist({
                   </div>
 
                   <h2>Your wishlist is empty</h2>
+
                   <p>Save your favourite products here to find them easily.</p>
 
                   <Link to="/" className="wishlist-shop-btn">
                     Continue Shopping
                   </Link>
                 </div>
-              ) : (
+              )}
+
+              {/* WISHLIST PRODUCTS */}
+
+              {wishlistLoaded && !loadError && wishlistItems.length > 0 && (
                 <div className="wishlist-list">
                   {wishlistItems.map((product) => (
                     <article className="wishlist-product" key={product.id}>
+                      {/* PRODUCT IMAGE */}
+
                       <div className="wishlist-product-image">
                         <img
                           src={product.image}
@@ -188,6 +421,8 @@ function Wishlist({
                           }}
                         />
                       </div>
+
+                      {/* PRODUCT DETAILS */}
 
                       <div className="wishlist-product-details">
                         <h2>{product.name}</h2>
@@ -210,6 +445,8 @@ function Wishlist({
                           ₹{Number(product.price || 0).toFixed(2)}
                         </p>
                       </div>
+
+                      {/* ACTION BUTTONS */}
 
                       <div className="wishlist-product-actions">
                         <button
@@ -240,11 +477,14 @@ function Wishlist({
         </main>
       </div>
 
+      {/* SNACKBAR */}
+
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000}
         onClose={(event, reason) => {
           if (reason === "clickaway") return;
+
           setSnackbarOpen(false);
         }}
         anchorOrigin={{
@@ -271,6 +511,8 @@ function Wishlist({
           </IconButton>
         }
       />
+
+      {/* LOGIN MODAL */}
 
       <Login open={loginOpen} onClose={() => setLoginOpen(false)} />
     </div>

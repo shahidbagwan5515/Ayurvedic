@@ -17,10 +17,10 @@ import CloseIcon from "@mui/icons-material/Close";
 // =====================================
 
 const API_URL =
-  "http://localhost/Admin-Panel/dashboard/Backend/api/product.php";
+  "https://plyexpert.com/shaheedApis/Backend-dashboard/api/product.php";
 
 const STOCK_API_URL =
-  "http://localhost/Admin-Panel/dashboard/Backend/api/stock.php";
+  "https://plyexpert.com/shaheedApis/Backend-dashboard/api/stock.php";
 
 const IMAGE_BASE_URL = "http://localhost";
 
@@ -63,7 +63,7 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
   const [cartMessage, setCartMessage] = useState("");
 
   // =====================================
-  // SEARCH DATA FROM HEADER
+  // SEARCH DATA
   // =====================================
 
   const selectedFromSearch = location.state?.product;
@@ -77,8 +77,9 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
     .toLowerCase();
 
   // =====================================
-  // FETCH PRODUCT + STOCK API
+  // FETCH PRODUCT AND STOCK API
   // =====================================
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -96,37 +97,36 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
           signal: controller.signal,
         };
 
+        // Fetch both APIs independently
         const [productResponse, stockResponse] = await Promise.all([
           fetch(API_URL, requestOptions),
           fetch(STOCK_API_URL, requestOptions),
         ]);
 
         console.log("Product API Status:", productResponse.status);
+
         console.log("Stock API Status:", stockResponse.status);
+
+        // =====================================
+        // PRODUCT API VALIDATION
+        // =====================================
 
         if (!productResponse.ok) {
           throw new Error(`Product API failed: HTTP ${productResponse.status}`);
         }
 
-        if (!stockResponse.ok) {
-          throw new Error(`Stock API failed: HTTP ${stockResponse.status}`);
-        }
-
         const productResult = await productResponse.json();
-        const stockResult = await stockResponse.json();
 
         console.log("Product API Data:", productResult);
-        console.log("Stock API Data:", stockResult);
 
         if (!productResult.success) {
           throw new Error(productResult.message || "Product fetch failed.");
         }
 
-        if (!stockResult.success) {
-          throw new Error(stockResult.message || "Stock fetch failed.");
-        }
-
+        // =====================================
         // PRODUCT DATA
+        // =====================================
+
         const productData = (productResult.data || [])
           .filter((item) => String(item.status).toLowerCase() === "active")
           .map((item) => {
@@ -150,33 +150,56 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
             };
           });
 
+        // =====================================
         // STOCK DATA
-        const stockData = (stockResult.data || []).map((item) => ({
-          id: `stock-${item.id}`,
-          originalId: item.id,
-          name: item.product_name || "",
-          sku: item.product_code || "",
-          category: item.category_name || "",
-          price: Number(item.unit_price) || 0,
-          stock: Math.max(0, Number(item.quantity) || 0),
-          supplier: item.supplier_name || "",
-          description: "",
-          image: getImageUrl(item.image_path),
-          images: item.image_path ? [item.image_path] : [],
-          oldPrice: null,
-          sizes: [],
-          source: "stock",
-        }));
+        // =====================================
 
-        // MERGE DATA
+        let stockData = [];
+
+        if (stockResponse.ok) {
+          const stockResult = await stockResponse.json();
+
+          console.log("Stock API Data:", stockResult);
+
+          if (stockResult.success) {
+            stockData = (stockResult.data || []).map((item) => ({
+              id: `stock-${item.id}`,
+              originalId: item.id,
+              name: item.product_name || "",
+              sku: item.product_code || "",
+              category: item.category_name || "",
+              price: Number(item.unit_price) || 0,
+              stock: Math.max(0, Number(item.quantity) || 0),
+              supplier: item.supplier_name || "",
+              description: "",
+              image: getImageUrl(item.image_path),
+              images: item.image_path ? [item.image_path] : [],
+              oldPrice: null,
+              sizes: [],
+              source: "stock",
+            }));
+          } else {
+            console.warn("Stock API Error:", stockResult.message);
+          }
+        } else {
+          console.warn("Stock API unavailable. HTTP:", stockResponse.status);
+        }
+
+        // =====================================
+        // MERGE PRODUCT AND STOCK
+        // =====================================
+
         const allProducts = [...productData, ...stockData];
 
         console.log("All Products:", allProducts);
 
-        setProducts(allProducts);
+        if (!controller.signal.aborted) {
+          setProducts(allProducts);
+        }
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Product/Stock API Error:", err);
+
           setError(err.message || "Unable to load products and stocks.");
         }
       } finally {
@@ -220,7 +243,6 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
 
     setQuantities((previous) => {
       const current = previous[id] || 1;
-
       const updated = current + amount;
 
       return {
@@ -262,6 +284,7 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
     });
 
     setCartMessage(`${product.name} added to cart successfully!`);
+
     setSnackbarOpen(true);
   };
 
@@ -272,25 +295,29 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
   const toggleFavorite = (product) => {
     if (typeof onWishlistChange !== "function") {
       setCartMessage("Wishlist functionality is not connected.");
+
       setSnackbarOpen(true);
       return;
     }
 
+    const wishlistId = product.originalId;
+
     const alreadyFavorite = wishlistItems.some(
-      (item) => String(item.id) === String(product.id),
+      (item) => String(item.id) === String(wishlistId),
     );
 
     let updatedWishlist;
 
     if (alreadyFavorite) {
       updatedWishlist = wishlistItems.filter(
-        (item) => String(item.id) !== String(product.id),
+        (item) => String(item.id) !== String(wishlistId),
       );
     } else {
       updatedWishlist = [
         ...wishlistItems,
         {
           ...product,
+          id: wishlistId,
           inStock: product.stock > 0,
         },
       ];
@@ -383,14 +410,14 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
           {filteredProducts.length > 0 ? (
             filteredProducts.map((product) => {
               const isFavorite = wishlistItems.some(
-                (item) => String(item.id) === String(product.id),
+                (item) => String(item.id) === String(product.originalId),
               );
 
               const quantity = quantities[product.id] || 1;
 
               return (
                 <article className="view-product-card" key={product.id}>
-                  {/* PRODUCT IMAGE */}
+                  {/* IMAGE */}
 
                   <div className="view-product-image">
                     <img
@@ -403,13 +430,9 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
                       onClick={() => setSelectedProduct(product)}
                     />
 
-                    {/* SOURCE LABEL */}
-
                     <span className="view-product-source">
                       {product.source === "stock" ? "Stock" : "Product"}
                     </span>
-
-                    {/* DISCOUNT */}
 
                     {product.oldPrice > product.price && (
                       <span className="view-product-offer">
@@ -442,7 +465,7 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
                     </button>
                   </div>
 
-                  {/* PRODUCT CONTENT */}
+                  {/* CONTENT */}
 
                   <div className="view-product-content">
                     <span className="view-product-category">
@@ -455,7 +478,7 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
                       {product.description || `Product code: ${product.sku}`}
                     </p>
 
-                    {/* STOCK QUANTITY */}
+                    {/* STOCK */}
 
                     <p className="view-product-stock">
                       {product.stock > 0

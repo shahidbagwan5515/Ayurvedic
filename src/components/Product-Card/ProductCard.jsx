@@ -1,11 +1,9 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "./ProductCard.css";
 import PrdInquary from "../DetailsCard/PrdInquary";
 
 import cardimg1 from "../../assets/banner-1.jpeg";
-import cardimg2 from "../../assets/nimbapatradi_churnam.jpg";
-import cardimg3 from "../../assets/shop.jpeg";
-import cardimg4 from "../../assets/psorakot.png";
 
 import Snackbar from "@mui/material/Snackbar";
 import IconButton from "@mui/material/IconButton";
@@ -18,7 +16,10 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCartOutlined";
 // =====================================
 
 const API_URL =
-  "http://localhost/Admin-Panel/dashboard/Backend/api/product.php";
+  "https://plyexpert.com/shaheedApis/Backend-dashboard/api/product.php";
+
+const STOCK_API_URL =
+  "https://plyexpert.com/shaheedApis/Backend-dashboard/api/stock.php";
 
 const IMAGE_BASE_URL = "http://localhost";
 
@@ -27,13 +28,32 @@ const IMAGE_BASE_URL = "http://localhost";
 // =====================================
 
 const getImageUrl = (image) => {
-  if (!image) return cardimg1;
+  if (!image || typeof image !== "string") {
+    return cardimg1;
+  }
 
   if (image.startsWith("http://") || image.startsWith("https://")) {
     return image;
   }
 
-  return `${IMAGE_BASE_URL}${image.startsWith("/") ? "" : "/"}${image}`;
+  return `${IMAGE_BASE_URL}/${image.replace(/^\/+/, "")}`;
+};
+
+// =====================================
+// STOCK HELPER
+// =====================================
+
+const getStockValue = (product) => {
+  const value =
+    product?.quantity ??
+    product?.stock ??
+    product?.stock_quantity ??
+    product?.available_stock ??
+    0;
+
+  const stock = Number(value);
+
+  return Number.isFinite(stock) ? Math.max(0, stock) : 0;
 };
 
 // =====================================
@@ -52,23 +72,22 @@ function ProductCard({
   // =====================================
 
   const [products, setProducts] = useState([]);
-
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
 
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-
   const [cartMessage, setCartMessage] = useState("");
 
   const [quantities, setQuantities] = useState({});
 
   const scrollRef = useRef(null);
 
+  const navigate = useNavigate();
+
   // =====================================
-  // FETCH PRODUCTS FROM PHP API
+  // FETCH PRODUCT + STOCK API
   // =====================================
 
   useEffect(() => {
@@ -79,29 +98,83 @@ function ProductCard({
         setLoading(true);
         setError("");
 
-        const response = await fetch(API_URL, {
+        const requestOptions = {
           method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
           signal: controller.signal,
-        });
+        };
 
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.status}`);
+        // Fetch both APIs
+        const [productResponse, stockResponse] = await Promise.all([
+          fetch(API_URL, requestOptions),
+          fetch(STOCK_API_URL, requestOptions),
+        ]);
+
+        if (!productResponse.ok) {
+          throw new Error(`Product API failed: ${productResponse.status}`);
         }
 
-        const result = await response.json();
+        const productResult = await productResponse.json();
 
-        if (!result.success || !Array.isArray(result.data)) {
-          throw new Error(result.message || "Unable to fetch products.");
+        if (!productResult.success || !Array.isArray(productResult.data)) {
+          throw new Error(productResult.message || "Unable to fetch products.");
         }
 
-        // Only active products will be displayed.
+        // =====================================
+        // FETCH STOCK DATA
+        // =====================================
 
-        const formattedProducts = result.data
-          .filter((product) => product.status?.toLowerCase() === "active")
+        let stockData = [];
+
+        if (stockResponse.ok) {
+          const stockResult = await stockResponse.json();
+
+          console.log("STOCK API RESPONSE:", stockResult);
+
+          if (stockResult.success && Array.isArray(stockResult.data)) {
+            stockData = stockResult.data;
+          }
+        } else {
+          console.warn("Stock API unavailable:", stockResponse.status);
+        }
+
+        console.log("PRODUCT API RESPONSE:", productResult);
+
+        // =====================================
+        // NORMALIZE SKU
+        // =====================================
+
+        const normalize = (value) =>
+          String(value || "")
+            .trim()
+            .toLowerCase();
+
+        // =====================================
+        // FORMAT PRODUCTS
+        // =====================================
+
+        const formattedProducts = productResult.data
+          .filter(
+            (product) => String(product.status).toLowerCase() === "active",
+          )
           .map((product) => {
             const images = Array.isArray(product.images) ? product.images : [];
 
-            return {
+            // Match product SKU with stock product_code
+            const matchingStock = stockData.find(
+              (stockItem) =>
+                normalize(stockItem.product_code) === normalize(product.sku),
+            );
+
+            // Use actual stock API quantity when SKU matches
+            const availableStock = matchingStock
+              ? getStockValue(matchingStock)
+              : getStockValue(product);
+
+            const formattedProduct = {
               ...product,
 
               id: Number(product.id),
@@ -116,11 +189,11 @@ function ProductCard({
 
               price: Number(product.price) || 0,
 
-              stock: Number(product.stock) || 0,
+              stock: availableStock,
 
-              supplier: product.supplier || "",
+              supplier: matchingStock?.supplier_name || product.supplier || "",
 
-              images: images.map((image) => getImageUrl(image)),
+              images: images.map(getImageUrl),
 
               image: images.length > 0 ? getImageUrl(images[0]) : cardimg1,
 
@@ -128,27 +201,38 @@ function ProductCard({
 
               oldPrice: null,
             };
+
+            console.log(
+              `${formattedProduct.name} | SKU: ${formattedProduct.sku} | Stock: ${formattedProduct.stock}`,
+            );
+
+            return formattedProduct;
           });
 
-        setProducts(formattedProducts);
+        console.log("FINAL PRODUCTS WITH STOCK:", formattedProducts);
 
-        // Initialize quantities.
+        if (!controller.signal.aborted) {
+          setProducts(formattedProducts);
 
-        setQuantities((previous) => {
-          const updated = {};
+          setQuantities((previous) => {
+            const updated = {};
 
-          formattedProducts.forEach((product) => {
-            updated[product.id] = previous[product.id] || 1;
+            formattedProducts.forEach((product) => {
+              updated[product.id] = Math.min(
+                previous[product.id] || 1,
+                Math.max(1, product.stock),
+              );
+            });
+
+            return updated;
           });
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Product Fetch Error:", err);
 
-          return updated;
-        });
-      } catch (error) {
-        if (error.name === "AbortError") return;
-
-        console.error("Product Fetch Error:", error);
-
-        setError(error.message || "Failed to load products.");
+          setError(err.message || "Failed to load products.");
+        }
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
@@ -164,7 +248,7 @@ function ProductCard({
   }, []);
 
   // =====================================
-  // SEND PRODUCTS TO PARENT COMPONENT
+  // SEND PRODUCTS TO PARENT
   // =====================================
 
   useEffect(() => {
@@ -172,27 +256,20 @@ function ProductCard({
   }, [products, onProductsChange]);
 
   // =====================================
-  // AUTO SCROLL PRODUCT CARDS
+  // AUTO SCROLL
   // =====================================
 
   useEffect(() => {
     const container = scrollRef.current;
 
-    if (!container) return;
+    if (!container || products.length === 0) return;
 
     let animationId;
-    let timeoutId;
-
     let paused = false;
-    let scrolling = true;
-
-    const scrollSpeed = 0.5;
-    const scrollDuration = 2000;
-    const pauseDuration = 2000;
 
     const autoScroll = () => {
-      if (!paused && scrolling) {
-        container.scrollLeft += scrollSpeed;
+      if (!paused) {
+        container.scrollLeft += 0.5;
 
         if (
           container.scrollLeft + container.clientWidth >=
@@ -205,34 +282,15 @@ function ProductCard({
       animationId = requestAnimationFrame(autoScroll);
     };
 
-    const scrollPauseLoop = () => {
-      if (paused) return;
-
-      scrolling = true;
-
-      timeoutId = setTimeout(() => {
-        scrolling = false;
-
-        timeoutId = setTimeout(() => {
-          scrollPauseLoop();
-        }, pauseDuration);
-      }, scrollDuration);
-    };
-
     const pause = () => {
       paused = true;
-      clearTimeout(timeoutId);
     };
 
     const resume = () => {
-      if (paused) {
-        paused = false;
-        scrollPauseLoop();
-      }
+      paused = false;
     };
 
     container.addEventListener("mouseenter", pause);
-
     container.addEventListener("mouseleave", resume);
 
     container.addEventListener("touchstart", pause, {
@@ -243,21 +301,14 @@ function ProductCard({
       passive: true,
     });
 
-    scrollPauseLoop();
-
     animationId = requestAnimationFrame(autoScroll);
 
     return () => {
       cancelAnimationFrame(animationId);
 
-      clearTimeout(timeoutId);
-
       container.removeEventListener("mouseenter", pause);
-
       container.removeEventListener("mouseleave", resume);
-
       container.removeEventListener("touchstart", pause);
-
       container.removeEventListener("touchend", resume);
     };
   }, [products.length]);
@@ -271,18 +322,21 @@ function ProductCard({
 
     if (!product || product.stock <= 0) return;
 
-    if ((quantities[id] || 1) >= product.stock) {
-      setCartMessage("Maximum available stock reached!");
+    setQuantities((previous) => {
+      const current = previous[id] || 1;
 
-      setSnackbarOpen(true);
+      if (current >= product.stock) {
+        setCartMessage("Maximum available stock reached!");
+        setSnackbarOpen(true);
 
-      return;
-    }
+        return previous;
+      }
 
-    setQuantities((previous) => ({
-      ...previous,
-      [id]: (previous[id] || 1) + 1,
-    }));
+      return {
+        ...previous,
+        [id]: current + 1,
+      };
+    });
   };
 
   // =====================================
@@ -297,7 +351,7 @@ function ProductCard({
   };
 
   // =====================================
-  // ADD PRODUCT TO CART
+  // ADD TO CART
   // =====================================
 
   const handleBuyNow = (product) => {
@@ -305,33 +359,25 @@ function ProductCard({
 
     if (product.stock <= 0) {
       setCartMessage("Product is out of stock!");
-
       setSnackbarOpen(true);
-
       return;
     }
 
     if (quantity > product.stock) {
       setCartMessage("Requested quantity is not available!");
-
       setSnackbarOpen(true);
-
       return;
     }
 
     if (typeof onAddToCart !== "function") {
       setCartMessage("Cart functionality is not connected.");
-
       setSnackbarOpen(true);
-
       return;
     }
 
     onAddToCart({
       ...product,
-
       quantity,
-
       selectedSize: product.sizes?.[0] || "",
     });
 
@@ -345,38 +391,38 @@ function ProductCard({
   // =====================================
 
   const toggleWishlist = (product) => {
-    if (typeof onWishlistChange !== "function") {
-      setCartMessage("Wishlist state is not connected in App.jsx.");
+    // CHECK LOGIN
+    const loggedInUser = localStorage.getItem("loggedInUser");
 
-      setSnackbarOpen(true);
-
+    if (!loggedInUser) {
+      alert("Please login first to use your wishlist.");
+      navigate("/Login");
       return;
     }
 
-    const exists = wishlistItems.some((item) => Number(item.id) === product.id);
-
-    let updatedWishlist;
-
-    if (exists) {
-      updatedWishlist = wishlistItems.filter(
-        (item) => Number(item.id) !== product.id,
-      );
-    } else {
-      updatedWishlist = [
-        ...wishlistItems,
-        {
-          ...product,
-
-          inStock: product.stock > 0,
-        },
-      ];
+    if (typeof onWishlistChange !== "function") {
+      setCartMessage("Wishlist functionality is not connected.");
+      setSnackbarOpen(true);
+      return;
     }
 
-    onWishlistChange(updatedWishlist);
+    const exists = wishlistItems.some(
+      (item) => String(item.id) === String(product.id),
+    );
 
-    localStorage.setItem("wishlistItems", JSON.stringify(updatedWishlist));
+    if (exists) {
+      onWishlistChange((previous) =>
+        previous.filter((item) => String(item.id) !== String(product.id)),
+      );
+    } else {
+      const wishlistProduct = {
+        ...product,
+        stock: Number(product.stock),
+        inStock: Number(product.stock) > 0,
+      };
 
-    window.dispatchEvent(new Event("wishlistUpdated"));
+      onWishlistChange((previous) => [...previous, wishlistProduct]);
+    }
 
     setCartMessage(
       exists
@@ -412,7 +458,7 @@ function ProductCard({
   }
 
   // =====================================
-  // EMPTY PRODUCTS UI
+  // EMPTY PRODUCTS
   // =====================================
 
   if (products.length === 0) {
@@ -422,7 +468,7 @@ function ProductCard({
   }
 
   // =====================================
-  // PRODUCT INQUIRY PAGE
+  // PRODUCT INQUIRY
   // =====================================
 
   if (selectedProduct) {
@@ -436,7 +482,7 @@ function ProductCard({
   }
 
   // =====================================
-  // MAIN PRODUCT CARD UI
+  // MAIN PRODUCT UI
   // =====================================
 
   return (
@@ -444,8 +490,12 @@ function ProductCard({
       <section className="prdcard-section" ref={scrollRef}>
         {products.map((product) => {
           const isWishlisted = wishlistItems.some(
-            (item) => Number(item.id) === product.id,
+            (item) => String(item.id) === String(product.id),
           );
+
+          const quantity = quantities[product.id] || 1;
+
+          const inStock = product.stock > 0;
 
           return (
             <div className="product-card" key={product.id}>
@@ -457,7 +507,6 @@ function ProductCard({
                   alt={product.name}
                   onError={(event) => {
                     event.currentTarget.onerror = null;
-
                     event.currentTarget.src = cardimg1;
                   }}
                   onClick={() => {
@@ -469,7 +518,7 @@ function ProductCard({
                   }}
                 />
 
-                {/* DISCOUNT BADGE */}
+                {/* DISCOUNT */}
 
                 {product.oldPrice > product.price && (
                   <span className="product-offer">
@@ -490,7 +539,6 @@ function ProductCard({
                   }`}
                   onClick={(event) => {
                     event.stopPropagation();
-
                     toggleWishlist(product);
                   }}
                   aria-label={
@@ -513,18 +561,35 @@ function ProductCard({
 
                 <p className="product-description">{product.description}</p>
 
-                {/* PRODUCT PRICE AND QUANTITY */}
+                {/* STOCK */}
+
+                <p
+                  className="product-stock-info"
+                  style={{
+                    color: inStock ? "#16834a" : "#dc2626",
+                    fontWeight: 600,
+                    fontSize: "13px",
+                  }}
+                >
+                  {inStock
+                    ? `Available Stock: ${product.stock}`
+                    : "Out of Stock"}
+                </p>
+
+                {/* PRICE AND QUANTITY */}
 
                 <div className="product-footer">
                   <div className="price-wrapper">
-                    <span className="product-price">₹{product.price}</span>
+                    <span className="product-price">
+                      ₹{product.price.toFixed(2)}
+                    </span>
 
                     {product.oldPrice > product.price && (
                       <span className="old-price">₹{product.oldPrice}</span>
                     )}
                   </div>
 
-                  {/* QUANTITY BOX */}
+                  {/* QUANTITY */}
 
                   <div
                     className="quantity-box"
@@ -533,40 +598,37 @@ function ProductCard({
                     <button
                       type="button"
                       onClick={() => decreaseQty(product.id)}
+                      disabled={!inStock || quantity <= 1}
                       aria-label="Decrease quantity"
                     >
                       −
                     </button>
 
-                    <span>{quantities[product.id] || 1}</span>
+                    <span>{quantity}</span>
 
                     <button
                       type="button"
                       onClick={() => increaseQty(product.id)}
+                      disabled={!inStock || quantity >= product.stock}
                       aria-label="Increase quantity"
-                      disabled={
-                        product.stock <= 0 ||
-                        (quantities[product.id] || 1) >= product.stock
-                      }
                     >
                       +
                     </button>
                   </div>
                 </div>
 
-                {/* ADD TO CART BUTTON */}
+                {/* ADD TO CART */}
 
                 <button
                   type="button"
                   className="buy-now-btn"
-                  disabled={product.stock <= 0}
+                  disabled={!inStock}
                   onClick={(event) => {
                     event.stopPropagation();
-
                     handleBuyNow(product);
                   }}
                 >
-                  {product.stock > 0 ? "Add to Cart" : "Out of Stock"}
+                  {inStock ? "Add to Cart" : "Out of Stock"}
 
                   <ShoppingCartIcon className="buyIcon-btn" />
                 </button>
@@ -576,14 +638,13 @@ function ProductCard({
         })}
       </section>
 
-      {/* SUCCESS / ERROR SNACKBAR */}
+      {/* SNACKBAR */}
 
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000}
         onClose={(event, reason) => {
           if (reason === "clickaway") return;
-
           setSnackbarOpen(false);
         }}
         anchorOrigin={{

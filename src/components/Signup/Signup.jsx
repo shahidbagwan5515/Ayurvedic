@@ -12,7 +12,7 @@ function Signup() {
   const navigate = useNavigate();
 
   const API_URL =
-    "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/signup.php";
+    "https://plyexpert.com/shaheedApis/Backend-web/api/signup.php";
 
   const [form, setForm] = useState({
     name: "",
@@ -67,10 +67,6 @@ function Signup() {
     }
 
     // EMAIL VALIDATION
-    if (!email) {
-      setError("Please enter your email address.");
-      return;
-    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Please enter a valid email address.");
       return;
@@ -97,7 +93,6 @@ function Signup() {
     try {
       setLoading(true);
 
-      // PHP API CONNECTION
       const response = await fetch(API_URL, {
         method: "POST",
         headers: {
@@ -111,7 +106,6 @@ function Signup() {
         }),
       });
 
-      // API RESPONSE
       const result = await response.json();
 
       if (!response.ok || !result.success) {
@@ -120,7 +114,13 @@ function Signup() {
         );
       }
 
-      // SUCCESS
+      // SAVE USER SESSION
+      if (result.data) {
+        localStorage.setItem("loggedInUser", JSON.stringify(result.data));
+
+        window.dispatchEvent(new Event("authChanged"));
+      }
+
       alert("Signup successful! Welcome to our store.");
 
       // RESET FORM
@@ -134,9 +134,10 @@ function Signup() {
       setAgree(false);
       setShowPassword(false);
 
-      // REDIRECT TO HOME PAGE
+      // REDIRECT TO HOME
       navigate("/", { replace: true });
     } catch (err) {
+      console.error("Signup Error:", err);
       setError(err.message || "Server connection failed. Please try again.");
     } finally {
       setLoading(false);

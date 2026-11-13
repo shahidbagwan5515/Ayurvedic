@@ -88,6 +88,38 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
 
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("loggedInUser")) || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [userAnchorEl, setUserAnchorEl] = useState(null);
+
+  const userMenuOpen = Boolean(userAnchorEl);
+
+  useEffect(() => {
+    const updateUser = () => {
+      try {
+        const savedUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+        setUser(savedUser);
+      } catch {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener("authChanged", updateUser);
+    window.addEventListener("storage", updateUser);
+
+    return () => {
+      window.removeEventListener("authChanged", updateUser);
+      window.removeEventListener("storage", updateUser);
+    };
+  }, []);
+
   const menuOpen = Boolean(anchorEl);
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -169,6 +201,18 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
   const openLogin = () => {
     setDrawerOpen(false);
     setLoginOpen(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("loggedInUser");
+
+    setUser(null);
+    setUserAnchorEl(null);
+    setLoginOpen(false);
+
+    window.dispatchEvent(new Event("authChanged"));
+
+    navigate("/");
   };
 
   return (
@@ -422,14 +466,48 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
                 </IconButton>
               </Link>
 
-              <IconButton
-                aria-label="Login"
-                onClick={openLogin}
-                className="login-action"
-              >
-                <PersonOutlinedIcon />
-                <span>Login</span>
-              </IconButton>
+              {user ? (
+                <>
+                  <Button
+                    className="login-action"
+                    onClick={(event) => setUserAnchorEl(event.currentTarget)}
+                    startIcon={<PersonOutlinedIcon />}
+                    endIcon={<KeyboardArrowDownIcon />}
+                  >
+                    {user.name}
+                  </Button>
+
+                  <Menu
+                    anchorEl={userAnchorEl}
+                    open={userMenuOpen}
+                    onClose={() => setUserAnchorEl(null)}
+                  >
+                    <MenuItem disabled>{user.email}</MenuItem>
+
+                    <Divider />
+
+                    <MenuItem
+                      onClick={() => {
+                        setUserAnchorEl(null);
+                        navigate("/Profile");
+                      }}
+                    >
+                      My Profile
+                    </MenuItem>
+
+                    <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                  </Menu>
+                </>
+              ) : (
+                <IconButton
+                  aria-label="Login"
+                  onClick={openLogin}
+                  className="login-action"
+                >
+                  <PersonOutlinedIcon />
+                  <span>Login</span>
+                </IconButton>
+              )}
             </div>
 
             {/* MOBILE MENU BUTTON */}
