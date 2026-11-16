@@ -2,6 +2,30 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Checkout.css";
 import CardEmp from "../CardEmp";
+import { createNotification } from "../../../utils/notificationService";
+
+const ORDER_API =
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/place_order.php";
+
+// =====================================
+// GET LOGGED IN USER ID
+// =====================================
+
+const getLoggedInUserId = () => {
+  const directId = localStorage.getItem("user_id");
+
+  if (directId && Number(directId) > 0) {
+    return Number(directId);
+  }
+
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    return Number(user.id || user.user_id || user.userId || user.userID || 0);
+  } catch {
+    return 0;
+  }
+};
 
 function Checkout({
   cartItems = [],
@@ -10,6 +34,7 @@ function Checkout({
   onPlaceOrder,
 }) {
   const navigate = useNavigate();
+
   const [discountCode, setDiscountCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [message, setMessage] = useState("");
@@ -18,6 +43,7 @@ function Checkout({
   const [deliveryAddress, setDeliveryAddress] = useState(null);
   const [billingAddress, setBillingAddress] = useState(null);
   const [showAddressForm, setShowAddressForm] = useState("");
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const [addressForm, setAddressForm] = useState({
     name: "",
@@ -28,10 +54,36 @@ function Checkout({
     pincode: "",
   });
 
-  // Always use actual products received from My Cart.
+  // =====================================
+  // NOTIFICATION HELPER
+  // =====================================
+
+  const sendNotification = async (
+    title,
+    notificationMessage,
+    type = "cart",
+  ) => {
+    try {
+      await createNotification({
+        title,
+        message: notificationMessage,
+        type,
+      });
+    } catch (error) {
+      console.error("Checkout Notification Error:", error);
+    }
+  };
+
+  // =====================================
+  // PRODUCTS
+  // =====================================
+
   const products = cartItems;
 
-  // Calculate subtotal.
+  // =====================================
+  // CALCULATE SUBTOTAL
+  // =====================================
+
   const subtotal = products.reduce((total, item) => {
     const price = Number(item.price) || 0;
     const quantity = Number(item.quantity) || 1;
@@ -39,7 +91,10 @@ function Checkout({
     return total + price * quantity;
   }, 0);
 
-  // Calculate discount, GST and grand total.
+  // =====================================
+  // DISCOUNT, GST AND GRAND TOTAL
+  // =====================================
+
   const validDiscount = Math.min(discount, subtotal);
   const taxableAmount = Math.max(0, subtotal - validDiscount);
   const deliveryAmount = 0;
@@ -47,7 +102,11 @@ function Checkout({
 
   const grandTotal = taxableAmount + deliveryAmount + gst;
 
-  const handlePlaceOrder = () => {
+  // =====================================
+  // PLACE ORDER + NOTIFICATION
+  // =====================================
+
+  const handlePlaceOrder = async () => {
     if (products.length === 0) {
       alert("Your cart is empty.");
       return;
@@ -58,21 +117,78 @@ function Checkout({
       return;
     }
 
-    navigate("/Payment", {
-      state: {
-        products,
-        deliveryAddress,
-        billingAddress,
-        subtotal,
-        discount: validDiscount,
-        deliveryAmount,
-        gst,
-        grandTotal,
-      },
-    });
+    const userId = getLoggedInUserId();
+
+    if (!userId) {
+      alert("Please login first to place your order.");
+      navigate("/Login");
+      return;
+    }
+
+    if (isPlacingOrder) return;
+
+    try {
+      setIsPlacingOrder(true);
+
+      const response = await fetch(ORDER_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          delivery_address: deliveryAddress,
+          billing_address: billingAddress,
+
+          coupon_code: isDiscountApplied
+            ? discountCode.trim().toUpperCase()
+            : "",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        console.error("Order API Error:", result);
+
+        throw new Error(
+          result.debug || result.message || "Unable to create order.",
+        );
+      }
+
+      // ORDER SUCCESS NOTIFICATION
+      await sendNotification(
+        "Order Placed Successfully",
+        `Your order ${result.order_number || result.order_id || ""} has been placed successfully.`,
+        "order",
+      );
+
+      navigate("/Payment", {
+        state: {
+          orderId: result.order_id,
+          orderNumber: result.order_number,
+          products,
+          deliveryAddress,
+          billingAddress,
+          subtotal: result.subtotal,
+          discount: result.discount,
+          deliveryAmount: result.delivery_amount,
+          gst: result.gst,
+          grandTotal: result.grand_total,
+        },
+      });
+    } catch (error) {
+      console.error("Place Order Error:", error);
+      alert(error.message || "Server connection failed.");
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
 
-  // Reset discount if cart subtotal changes.
+  // =====================================
+  // RESET DISCOUNT IF SUBTOTAL CHANGES
+  // =====================================
+
   useEffect(() => {
     if (isDiscountApplied) {
       const newDiscount = subtotal * 0.1;
@@ -86,7 +202,10 @@ function Checkout({
     }
   }, [subtotal, isDiscountApplied]);
 
-  // Format price in Indian currency.
+  // =====================================
+  // CURRENCY FORMAT
+  // =====================================
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
@@ -96,8 +215,11 @@ function Checkout({
     }).format(price);
   };
 
-  // Update product quantity in the shared App cart state.
-  const updateQuantity = (id, amount) => {
+  // =====================================
+  // UPDATE PRODUCT QUANTITY
+  // =====================================
+
+  const updateQuantity = async (id, amount) => {
     const product = products.find((item) => item.id === id);
 
     if (!product) return;
@@ -107,17 +229,55 @@ function Checkout({
 
     if (newQuantity < 1) return;
 
-    onUpdateQuantity?.(id, newQuantity);
+    try {
+      if (typeof onUpdateQuantity !== "function") {
+        throw new Error("Quantity update function is not available.");
+      }
+
+      await onUpdateQuantity(id, newQuantity);
+
+      await sendNotification(
+        "Cart Quantity Updated",
+        `${product.name || product.title || "Product"} quantity updated to ${newQuantity}.`,
+        "cart",
+      );
+    } catch (error) {
+      console.error("Checkout Quantity Update Error:", error);
+    }
   };
 
-  // Remove product from the shared cart.
-  const removeProduct = (id) => {
-    onRemove?.(id);
-    setMessage("");
+  // =====================================
+  // REMOVE PRODUCT FROM CART
+  // =====================================
+
+  const removeProduct = async (id) => {
+    const product = products.find((item) => item.id === id);
+
+    if (!product) return;
+
+    try {
+      if (typeof onRemove !== "function") {
+        throw new Error("Remove function is not available.");
+      }
+
+      await onRemove(id);
+      setMessage("");
+
+      await sendNotification(
+        "Product Removed from Cart",
+        `${product.name || product.title || "Product"} has been removed from your cart.`,
+        "cart",
+      );
+    } catch (error) {
+      console.error("Checkout Remove Product Error:", error);
+    }
   };
 
-  // Apply coupon.
-  const applyDiscount = () => {
+  // =====================================
+  // APPLY COUPON
+  // =====================================
+
+  const applyDiscount = async () => {
     const code = discountCode.trim().toUpperCase();
 
     if (products.length === 0) {
@@ -131,6 +291,12 @@ function Checkout({
       setDiscount(subtotal * 0.1);
       setIsDiscountApplied(true);
       setMessage("Discount code applied successfully!");
+
+      await sendNotification(
+        "Coupon Applied Successfully",
+        "AYUR10 coupon applied. You received 10% discount on your order.",
+        "cart",
+      );
     } else {
       setDiscount(0);
       setIsDiscountApplied(false);
@@ -138,7 +304,10 @@ function Checkout({
     }
   };
 
-  // Open delivery or billing address form.
+  // =====================================
+  // OPEN ADDRESS FORM
+  // =====================================
+
   const openAddressForm = (type) => {
     const existingAddress =
       type === "delivery" ? deliveryAddress : billingAddress;
@@ -159,40 +328,40 @@ function Checkout({
     );
   };
 
-  // Save address.
-  const saveAddress = (event) => {
+  // =====================================
+  // SAVE ADDRESS + NOTIFICATION
+  // =====================================
+
+  const saveAddress = async (event) => {
     event.preventDefault();
 
     const savedAddress = { ...addressForm };
 
     if (showAddressForm === "delivery") {
       setDeliveryAddress(savedAddress);
+
+      await sendNotification(
+        "Delivery Address Saved",
+        `Delivery address for ${savedAddress.name} has been saved successfully.`,
+        "order",
+      );
     } else if (showAddressForm === "billing") {
       setBillingAddress(savedAddress);
+
+      await sendNotification(
+        "Billing Address Saved",
+        `Billing address for ${savedAddress.name} has been saved successfully.`,
+        "order",
+      );
     }
 
     setShowAddressForm("");
   };
 
-  // Place order validation.
-  // const handlePlaceOrder = () => {
-  //   if (products.length === 0) {
-  //     alert("Your cart is empty.");
-  //     return;
-  //   }
+  // =====================================
+  // EMPTY CART
+  // =====================================
 
-  //   if (!deliveryAddress || !billingAddress) {
-  //     alert("Please add both delivery and billing addresses.");
-  //     return;
-  //   }
-
-  //   // Connect your backend order/payment API here.
-  //   alert(
-  //     "Checkout details are ready. Connect your order API to place the order.",
-  //   );
-  // };
-
-  // Empty cart.
   if (products.length === 0) {
     return (
       <div className="mycard-empty">
@@ -201,9 +370,14 @@ function Checkout({
     );
   }
 
+  // =====================================
+  // MAIN CHECKOUT UI
+  // =====================================
+
   return (
     <div className="checkout-page">
-      {/* Breadcrumb */}
+      {/* BREADCRUMB */}
+
       <div className="checkout-breadcrumb">
         <Link to="/">Home</Link>
         <span>›</span>
@@ -211,9 +385,11 @@ function Checkout({
       </div>
 
       <div className="checkout-layout">
-        {/* Left section */}
+        {/* LEFT SECTION */}
+
         <div className="checkout-left">
-          {/* User information */}
+          {/* USER INFORMATION */}
+
           <section className="checkout-user-card">
             <div className="checkout-avatar">U</div>
 
@@ -227,7 +403,8 @@ function Checkout({
             </Link>
           </section>
 
-          {/* Delivery address */}
+          {/* DELIVERY ADDRESS */}
+
           <section className="checkout-address-card">
             <h2>Delivery Address</h2>
 
@@ -345,7 +522,8 @@ function Checkout({
             )}
           </section>
 
-          {/* Billing address */}
+          {/* BILLING ADDRESS */}
+
           <section className="checkout-address-card">
             <h2>Billing Address</h2>
 
@@ -464,10 +642,12 @@ function Checkout({
           </section>
         </div>
 
-        {/* Right section */}
+        {/* RIGHT SECTION */}
+
         <aside className="checkout-right">
           <section className="checkout-summary-card">
-            {/* Coupon */}
+            {/* COUPON */}
+
             <h3>Apply Discount Code</h3>
 
             <div className="checkout-coupon-row">
@@ -510,7 +690,8 @@ function Checkout({
 
             <div className="checkout-divider" />
 
-            {/* Order summary */}
+            {/* ORDER SUMMARY */}
+
             <h3 className="checkout-summary-title">
               Order Summary ({products.length} products)
             </h3>
@@ -599,7 +780,8 @@ function Checkout({
 
             <div className="checkout-divider" />
 
-            {/* Price details */}
+            {/* PRICE DETAILS */}
+
             <h3 className="checkout-price-title">Price Details</h3>
 
             <div className="checkout-price-row">
@@ -626,18 +808,22 @@ function Checkout({
 
             <div className="checkout-divider" />
 
-            {/* Grand total */}
+            {/* GRAND TOTAL */}
+
             <div className="checkout-grand-total">
               <span>Grand Total</span>
               <strong>{formatPrice(grandTotal)}</strong>
             </div>
 
+            {/* PLACE ORDER */}
+
             <button
               type="button"
               className="checkout-place-order"
               onClick={handlePlaceOrder}
+              disabled={isPlacingOrder}
             >
-              Place Order
+              {isPlacingOrder ? "Creating Order..." : "Place Order"}
             </button>
 
             <p className="checkout-shipping-note">

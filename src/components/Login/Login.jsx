@@ -22,7 +22,10 @@ function Login({ open, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // =====================================
   // INPUT CHANGE
+  // =====================================
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -34,7 +37,10 @@ function Login({ open, onClose }) {
     setError("");
   };
 
+  // =====================================
   // LOGIN SUBMIT
+  // =====================================
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -55,6 +61,7 @@ function Login({ open, onClose }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           email,
@@ -68,22 +75,65 @@ function Login({ open, onClose }) {
         throw new Error(data.message || "Email or password is incorrect.");
       }
 
-      // SAVE USER DATA
-      localStorage.setItem("loggedInUser", JSON.stringify(data.data));
+      // =====================================
+      // GET CUSTOMER DATA
+      // =====================================
 
-      // UPDATE HEADER
+      const loggedInUser = data.data;
+
+      if (!loggedInUser || typeof loggedInUser !== "object") {
+        throw new Error("Invalid customer information received.");
+      }
+
+      const loggedInUserId = Number(
+        loggedInUser.id || loggedInUser.user_id || loggedInUser.userId || 0,
+      );
+
+      if (!Number.isSafeInteger(loggedInUserId) || loggedInUserId <= 0) {
+        throw new Error("Login response does not contain a valid customer ID.");
+      }
+
+      // =====================================
+      // CLEAR PREVIOUS CUSTOMER DATA
+      // =====================================
+
+      localStorage.removeItem("loggedInUser");
+      localStorage.removeItem("user_id");
+      localStorage.removeItem("user");
+
+      // =====================================
+      // SAVE CURRENT CUSTOMER DATA
+      // =====================================
+
+      localStorage.setItem("loggedInUser", JSON.stringify(loggedInUser));
+
+      localStorage.setItem("user_id", String(loggedInUserId));
+
+      // =====================================
+      // NOTIFY OTHER COMPONENTS
+      // =====================================
+
       window.dispatchEvent(new Event("authChanged"));
 
+      window.dispatchEvent(new Event("notificationUpdated"));
+
+      // =====================================
       // RESET FORM
+      // =====================================
+
       setForm({
         email: "",
         password: "",
       });
 
       setShowPassword(false);
+      setError("");
 
+      // =====================================
       // SUCCESS
-      alert("Login successful! Welcome " + data.data.name);
+      // =====================================
+
+      alert("Login successful! Welcome " + (loggedInUser.name || "Customer"));
 
       if (onClose) {
         onClose();
@@ -99,6 +149,10 @@ function Login({ open, onClose }) {
     }
   };
 
+  // =====================================
+  // RETURN UI
+  // =====================================
+
   return (
     <Drawer
       anchor="right"
@@ -111,15 +165,18 @@ function Login({ open, onClose }) {
     >
       <div className="login-container">
         {/* CLOSE BUTTON */}
+
         <button
           type="button"
           className="login-close-btn"
           onClick={onClose || (() => navigate("/"))}
+          aria-label="Close login"
         >
           <CloseIcon />
         </button>
 
         {/* LOGO */}
+
         <div className="login-logo">
           <div className="logo-circle">✿</div>
 
@@ -132,8 +189,10 @@ function Login({ open, onClose }) {
         <h2>Welcome to Login</h2>
 
         {/* LOGIN FORM */}
+
         <form className="login-form" onSubmit={handleSubmit}>
           {/* EMAIL */}
+
           <label>Email</label>
 
           <input
@@ -147,6 +206,7 @@ function Login({ open, onClose }) {
           />
 
           {/* PASSWORD */}
+
           <label>Password</label>
 
           <div className="password-box">
@@ -174,11 +234,13 @@ function Login({ open, onClose }) {
           </div>
 
           {/* FORGOT PASSWORD */}
+
           <div className="forgot-password">
             <button type="button">Forgot Password</button>
           </div>
 
           {/* ERROR */}
+
           {error && (
             <p className="login-error" role="alert">
               {error}
@@ -186,17 +248,20 @@ function Login({ open, onClose }) {
           )}
 
           {/* LOGIN BUTTON */}
+
           <button type="submit" className="login-btn" disabled={loading}>
             {loading ? "Logging in..." : "Login"}
           </button>
 
           {/* OTP BUTTON */}
+
           <button type="button" className="otp-btn" disabled>
             Login with OTP
           </button>
         </form>
 
         {/* SIGNUP LINK */}
+
         <div className="Sign-up">
           <p>
             Don't have an account? <Link to="/Signup">Sign up</Link>

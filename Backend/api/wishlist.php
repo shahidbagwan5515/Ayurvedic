@@ -2,10 +2,10 @@
 <?php
 
 // ==========================================
-// WISHLIST API - AYURVEDIC ECOMMERCE
+// WISHLIST API - CUSTOMER WISE
 // ==========================================
 
-// CORS CONFIGURATION
+// CORS
 $allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
@@ -17,24 +17,22 @@ $origin = $_SERVER["HTTP_ORIGIN"] ?? "";
 
 if (in_array($origin, $allowedOrigins, true)) {
   header("Access-Control-Allow-Origin: " . $origin);
+  header("Vary: Origin");
 }
 
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json; charset=UTF-8");
-header("Vary: Origin");
 
-// OPTIONS REQUEST
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
   http_response_code(200);
   exit;
 }
 
-// DATABASE CONNECTION
 require_once __DIR__ . "/../config/db.php";
 
 // ==========================================
-// JSON RESPONSE
+// RESPONSE
 // ==========================================
 
 function sendResponse($success, $message, $data = null, $status = 200)
@@ -60,26 +58,58 @@ try {
     sendResponse(false, "Database connection failed.", null, 500);
   }
 
-  // GUEST TOKEN
-  $guestToken = trim($_GET["guest_token"] ?? "");
+  $method = $_SERVER["REQUEST_METHOD"];
 
-  if (
-    $guestToken === "" ||
-    strlen($guestToken) > 100
-  ) {
-    sendResponse(false, "Valid guest token is required.", null, 400);
+  if (!in_array($method, ["GET", "POST"], true)) {
+    sendResponse(false, "Method not allowed.", null, 405);
   }
 
   // ======================================
-  // GET WISHLIST
+  // GET REQUEST DATA
   // ======================================
 
-  if ($_SERVER["REQUEST_METHOD"] === "GET") {
+  if ($method === "GET") {
+
+    $userId = filter_var(
+      $_GET["user_id"] ?? null,
+      FILTER_VALIDATE_INT
+    );
+  } else {
+
+    $input = json_decode(file_get_contents("php://input"), true);
+
+    if (!is_array($input)) {
+      sendResponse(false, "Invalid JSON request.", null, 400);
+    }
+
+    $userId = filter_var(
+      $input["user_id"] ?? null,
+      FILTER_VALIDATE_INT
+    );
+  }
+
+  // ======================================
+  // USER VALIDATION
+  // ======================================
+
+  if (!$userId || $userId <= 0) {
+    sendResponse(
+      false,
+      "Please login to access your wishlist.",
+      null,
+      401
+    );
+  }
+
+  // ======================================
+  // GET CUSTOMER WISHLIST
+  // ======================================
+
+  if ($method === "GET") {
 
     $stmt = $conn->prepare("
             SELECT
                 id,
-                guest_token,
                 product_id,
                 product_name,
                 sku,
@@ -87,11 +117,9 @@ try {
                 description,
                 price,
                 image,
-                in_stock,
-                created_at,
-                updated_at
+                in_stock
             FROM wishlist_items
-            WHERE guest_token = ?
+            WHERE user_id = ?
             ORDER BY id DESC
         ");
 
@@ -99,7 +127,7 @@ try {
       throw new Exception($conn->error);
     }
 
-    $stmt->bind_param("s", $guestToken);
+    $stmt->bind_param("i", $userId);
     $stmt->execute();
 
     $result = $stmt->get_result();
@@ -125,25 +153,16 @@ try {
 
     sendResponse(
       true,
-      "Wishlist fetched successfully.",
+      "Customer wishlist fetched successfully.",
       $items
     );
   }
 
   // ======================================
-  // SAVE / UPDATE WISHLIST
+  // SAVE CUSTOMER WISHLIST
   // ======================================
 
-  if ($_SERVER["REQUEST_METHOD"] === "POST") {
-
-    $input = json_decode(
-      file_get_contents("php://input"),
-      true
-    );
-
-    if (!is_array($input)) {
-      sendResponse(false, "Invalid JSON request.", null, 400);
-    }
+  if ($method === "POST") {
 
     if (
       !isset($input["items"]) ||
@@ -157,15 +176,9 @@ try {
       );
     }
 
-    $items = $input["items"];
-
-    // --------------------------------------
-    // NORMALIZE AND REMOVE DUPLICATES
-    // --------------------------------------
-
     $uniqueItems = [];
 
-    foreach ($items as $product) {
+    foreach ($input["items"] as $product) {
 
       if (!is_array($product)) {
         continue;
@@ -202,51 +215,51 @@ try {
           150
         ),
 
-        "description" => $product["description"] ?? "",
+        "description" => (string)($product["description"] ?? ""),
 
         "price" => max(
           0,
           (float)($product["price"] ?? 0)
         ),
 
-        "image" => $product["image"] ?? "",
+        "image" => (string)($product["image"] ?? ""),
 
         "in_stock" => !empty($product["inStock"] ?? $product["in_stock"] ?? false) ? 1 : 0
       ];
     }
 
-    // --------------------------------------
+    // ==================================
     // TRANSACTION
-    // --------------------------------------
+    // ==================================
 
     $conn->begin_transaction();
 
     try {
 
-      // Remove previous wishlist for this guest.
-      // New complete list will be inserted below.
+      // Delete ONLY current customer's wishlist
 
       $deleteStmt = $conn->prepare("
                 DELETE FROM wishlist_items
-                WHERE guest_token = ?
+                WHERE user_id = ?
             ");
 
       if (!$deleteStmt) {
         throw new Exception($conn->error);
       }
 
-      $deleteStmt->bind_param("s", $guestToken);
+      $deleteStmt->bind_param("i", $userId);
       $deleteStmt->execute();
       $deleteStmt->close();
 
-      // ----------------------------------
-      // INSERT WISHLIST PRODUCTS
-      // ----------------------------------
+      // ==================================
+      // INSERT CURRENT CUSTOMER PRODUCTS
+      // ==================================
 
-      if (count($uniqueItems) > 0) {
+      if (!empty($uniqueItems)) {
 
         $insertStmt = $conn->prepare("
                     INSERT INTO wishlist_items (
+                        user_id,
                         guest_token,
                         product_id,
                         product_name,
@@ -257,7 +270,7 @@ try {
                         image,
                         in_stock
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
 
         if (!$insertStmt) {
@@ -276,8 +289,8 @@ try {
           $inStock = $product["in_stock"];
 
           $insertStmt->bind_param(
-            "sissssdsi",
-            $guestToken,
+            "iissssdsi",
+            $userId,
             $productId,
             $name,
             $sku,
@@ -300,7 +313,7 @@ try {
         true,
         "Wishlist saved successfully.",
         [
-          "guest_token" => $guestToken,
+          "user_id" => $userId,
           "total_items" => count($uniqueItems),
           "items" => array_values($uniqueItems)
         ]
@@ -312,24 +325,13 @@ try {
       throw $e;
     }
   }
-
-  // ======================================
-  // INVALID METHOD
-  // ======================================
-
-  sendResponse(
-    false,
-    "Method not allowed.",
-    null,
-    405
-  );
 } catch (Throwable $e) {
 
   error_log("Wishlist API Error: " . $e->getMessage());
 
   sendResponse(
     false,
-    "Wishlist operation failed: " . $e->getMessage(),
+    "Wishlist operation failed.",
     null,
     500
   );

@@ -1,16 +1,47 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Payment.css";
+import { createNotification } from "../../utils/notificationService";
+
+const PAYMENT_API =
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/payment.php";
+
+// =====================================
+// GET LOGGED IN USER ID
+// =====================================
+
+const getLoggedInUserId = () => {
+  const directId = localStorage.getItem("user_id");
+
+  if (directId && Number(directId) > 0) {
+    return Number(directId);
+  }
+
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    return Number(user.id || user.user_id || user.userId || user.userID || 0);
+  } catch {
+    return 0;
+  }
+};
 
 function Payment({ onPlaceOrder }) {
   const [paymentMethod, setPaymentMethod] = useState("upi");
+  const [isPaying, setIsPaying] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successOrder, setSuccessOrder] = useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Checkout se receive  data
+  // =====================================
+  // CHECKOUT DATA
+  // =====================================
 
   const {
+    orderId,
+    orderNumber,
     products = [],
     subtotal = 0,
     discount = 0,
@@ -21,14 +52,36 @@ function Payment({ onPlaceOrder }) {
     billingAddress = null,
   } = location.state || {};
 
-  // Price format
+  // =====================================
+  // NOTIFICATION HELPER
+  // =====================================
+
+  const sendNotification = async (title, message, type = "order") => {
+    try {
+      await createNotification({
+        title,
+        message,
+        type,
+      });
+    } catch (error) {
+      console.error("Payment Notification Error:", error);
+    }
+  };
+
+  // =====================================
+  // PRICE FORMAT
+  // =====================================
+
   const formatPrice = (price) =>
     `₹${(Number(price) || 0).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
 
-  // Payment options
+  // =====================================
+  // PAYMENT OPTIONS
+  // =====================================
+
   const paymentOptions = [
     {
       id: "upi",
@@ -56,60 +109,106 @@ function Payment({ onPlaceOrder }) {
     },
   ];
 
-  // Confirm payment
+  // =====================================
+  // CONFIRM PAYMENT
+  // =====================================
 
-  const handlePayment = (e) => {
+  const handlePayment = async (e) => {
     e.preventDefault();
 
+    if (!orderId) {
+      alert("Order ID missing. Please checkout again.");
+      navigate("/Checkout");
+      return;
+    }
+
     if (!products.length) {
-      alert("Your cart is empty. Please add products first.");
+      alert("Your cart is empty.");
       navigate("/Checkout");
       return;
     }
 
-    if (!deliveryAddress || !billingAddress) {
-      alert("Please select delivery and billing addresses.");
-      navigate("/Checkout");
+    const userId = getLoggedInUserId();
+
+    if (!userId) {
+      alert("Please login first.");
+      navigate("/Login");
       return;
     }
 
-    if (typeof onPlaceOrder !== "function") {
-      alert("Order functionality is not connected. Check App.jsx.");
-      return;
+    if (isPaying) return;
+
+    try {
+      setIsPaying(true);
+
+      const response = await fetch(PAYMENT_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          order_id: Number(orderId),
+          user_id: userId,
+          payment_method: paymentMethod,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Payment request failed.");
+      }
+
+      // =====================================
+      // CASH ON DELIVERY
+      // =====================================
+
+      if (paymentMethod === "cod") {
+        const confirmedOrder = {
+          orderId: result.order_id,
+          orderNumber: result.order_number || orderNumber,
+          paymentMethod: "Cash on Delivery",
+        };
+
+        setSuccessOrder(confirmedOrder);
+
+        await sendNotification(
+          "Order Confirmed Successfully",
+          `Your order ${confirmedOrder.orderNumber} has been confirmed with Cash on Delivery. Order total: ${formatPrice(grandTotal)}.`,
+          "order",
+        );
+
+        setShowSuccess(true);
+        return;
+      }
+
+      // =====================================
+      // ONLINE PAYMENT
+      // =====================================
+
+      await sendNotification(
+        "Online Payment Pending",
+        `Your ${paymentMethod.toUpperCase()} payment method has been selected for order ${result.order_number || orderNumber}. Complete payment after payment gateway integration.`,
+        "order",
+      );
+
+      alert(
+        "Online payment gateway is not integrated yet. Your order payment status is Pending.",
+      );
+    } catch (error) {
+      console.error("Payment API Error:", error);
+
+      alert(error.message || "Unable to connect to payment server.");
+    } finally {
+      setIsPaying(false);
     }
-
-    const selectedPayment =
-      paymentMethod === "upi"
-        ? "UPI"
-        : paymentMethod === "card"
-          ? "Credit / Debit Card"
-          : paymentMethod === "netbanking"
-            ? "Net Banking"
-            : "Cash on Delivery";
-
-    // Demo order: no real payment is processed
-    onPlaceOrder({
-      products,
-      total: Number(grandTotal) || 0,
-      subtotal: Number(subtotal) || 0,
-      discount: Number(discount) || 0,
-      deliveryAmount: Number(deliveryAmount) || 0,
-      gst: Number(gst) || 0,
-      deliveryAddress,
-      billingAddress,
-      paymentMethod: selectedPayment,
-      paymentStatus: paymentMethod === "cod" ? "Pending" : "Demo",
-    });
-
-    alert(`Order Placed Successfully`);
-
-    navigate("/OrderHistory", { replace: true });
   };
 
   return (
     <div className="payment-page">
       <div className="payment-container">
-        {/* Breadcrumb */}
+        {/* BREADCRUMB */}
+
         <div className="payment-breadcrumb">
           <Link to="/">Home</Link>
           <span>/</span>
@@ -118,7 +217,8 @@ function Payment({ onPlaceOrder }) {
           <span className="current">Payment</span>
         </div>
 
-        {/* Heading */}
+        {/* HEADING */}
+
         <div className="payment-heading">
           <div>
             <span className="payment-eyebrow">SECURE CHECKOUT</span>
@@ -136,7 +236,8 @@ function Payment({ onPlaceOrder }) {
         </div>
 
         <form onSubmit={handlePayment} className="payment-layout">
-          {/* Left: Payment methods */}
+          {/* LEFT: PAYMENT METHODS */}
+
           <section className="payment-card">
             <div className="payment-section-heading">
               <div className="payment-step">01</div>
@@ -179,6 +280,7 @@ function Payment({ onPlaceOrder }) {
             </div>
 
             {/* UPI */}
+
             {paymentMethod === "upi" && (
               <div className="payment-extra">
                 <label htmlFor="upiId">UPI ID (optional)</label>
@@ -190,7 +292,8 @@ function Payment({ onPlaceOrder }) {
               </div>
             )}
 
-            {/* Card */}
+            {/* CARD */}
+
             {paymentMethod === "card" && (
               <div className="payment-extra">
                 <label htmlFor="cardNumber">Card Number</label>
@@ -229,7 +332,8 @@ function Payment({ onPlaceOrder }) {
               </div>
             )}
 
-            {/* Net Banking */}
+            {/* NET BANKING */}
+
             {paymentMethod === "netbanking" && (
               <div className="payment-extra">
                 <label htmlFor="bank">Choose your bank</label>
@@ -246,7 +350,8 @@ function Payment({ onPlaceOrder }) {
               </div>
             )}
 
-            {/* Cash on Delivery */}
+            {/* CASH ON DELIVERY */}
+
             {paymentMethod === "cod" && (
               <div className="payment-cod-note">
                 <span>✓</span>
@@ -254,22 +359,26 @@ function Payment({ onPlaceOrder }) {
               </div>
             )}
 
-            {/* Trust information */}
+            {/* TRUST INFORMATION */}
+
             <div className="payment-trust">
               <span>🔐 Secure checkout</span>
               <span>✓ Safe shopping</span>
-              <span> Customer support</span>
+              <span>Customer support</span>
             </div>
           </section>
 
-          {/* Right: Order summary */}
+          {/* RIGHT: ORDER SUMMARY */}
+
           <aside className="payment-summary">
             <h2>Order Summary</h2>
+
             <p className="summary-subtitle">
               Review your order before continuing.
             </p>
 
-            {/* Actual cart products */}
+            {/* CART PRODUCTS */}
+
             <div className="summary-products">
               {products.length > 0 ? (
                 products.map((product, index) => {
@@ -311,7 +420,8 @@ function Payment({ onPlaceOrder }) {
 
             <div className="summary-divider" />
 
-            {/* Price breakdown */}
+            {/* PRICE BREAKDOWN */}
+
             <div className="summary-row">
               <span>Subtotal</span>
               <strong>{formatPrice(subtotal)}</strong>
@@ -340,20 +450,26 @@ function Payment({ onPlaceOrder }) {
 
             <div className="summary-divider" />
 
+            {/* GRAND TOTAL */}
+
             <div className="summary-total">
               <span>Total Payable</span>
               <strong>{formatPrice(grandTotal)}</strong>
             </div>
 
-            {/* Submit */}
+            {/* SUBMIT */}
+
             <button
               type="submit"
               className="payment-submit-btn"
-              disabled={!products.length}
+              disabled={!products.length || isPaying}
             >
-              {paymentMethod === "cod"
-                ? "Confirm Cash on Delivery"
-                : "Continue to Pay"}
+              {isPaying
+                ? "Please wait..."
+                : paymentMethod === "cod"
+                  ? "Confirm Cash on Delivery"
+                  : "Continue to Pay"}
+
               <span>→</span>
             </button>
 
@@ -361,7 +477,8 @@ function Payment({ onPlaceOrder }) {
               ← Back to Checkout
             </Link>
 
-            {/* Help */}
+            {/* HELP */}
+
             <div className="payment-help">
               <span>💬</span>
               <div>
@@ -372,6 +489,49 @@ function Payment({ onPlaceOrder }) {
           </aside>
         </form>
       </div>
+
+      {/* =====================================
+          ORDER SUCCESS MODAL
+      ===================================== */}
+
+      {showSuccess && (
+        <div className="payment-success-overlay">
+          <div className="payment-success-modal">
+            <div className="success-icon">✓</div>
+
+            <span className="success-label">ORDER CONFIRMED</span>
+
+            <h2>Thank You for Your Order!</h2>
+
+            <p>
+              Your order has been successfully placed. We will notify you when
+              your order is ready.
+            </p>
+
+            <div className="success-order-details">
+              <span>Order Number</span>
+              <strong>{successOrder?.orderNumber}</strong>
+
+              <span>Payment Method</span>
+              <strong>{successOrder?.paymentMethod}</strong>
+
+              <span>Order Total</span>
+              <strong>{formatPrice(grandTotal)}</strong>
+            </div>
+
+            <button
+              className="success-continue-btn"
+              onClick={() => {
+                navigate("/OrderHistory", { replace: true });
+              }}
+            >
+              View My Orders →
+            </button>
+
+            <p className="success-footer">Thank you for shopping with us 🌿</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

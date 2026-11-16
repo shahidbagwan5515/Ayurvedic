@@ -1,10 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-
-import { useState, useEffect, useCallback } from "react";
-
-// ==========================================
-// COMPONENT IMPORTS
-// ==========================================
+import { useState, useEffect, useRef, useCallback } from "react";
 
 import Header from "./components/Header/Header";
 import Home from "./components/Home/Home";
@@ -29,134 +24,364 @@ import ProductCard from "./components/Product-Card/ProductCard";
 import Notification from "./components/Notification/Notification";
 import Signup from "./components/Signup/Signup";
 
-// ==========================================
-// WISHLIST API
-// ==========================================
+import { createNotification } from "./utils/notificationService";
+import Account from "./components/Wishlist/Account/Account";
+
+// =====================================
+// API CONFIGURATION
+// =====================================
+
+const CART_API =
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/cart.php";
 
 const WISHLIST_API =
   "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/wishlist.php";
 
-// ==========================================
-// GUEST TOKEN
-// ==========================================
+const ORDERS_API =
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/order_history.php";
 
-const getGuestToken = () => {
-  let token = localStorage.getItem("guest_token");
+// =====================================
+// GET LOGGED-IN USER ID
+// =====================================
 
-  if (!token) {
-    const randomId = window.crypto?.randomUUID
-      ? window.crypto.randomUUID()
-      : Date.now() + "_" + Math.random().toString(36).slice(2);
+const getLoggedInUserId = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
 
-    token = "guest_" + randomId;
+    const loggedInUser = JSON.parse(
+      localStorage.getItem("loggedInUser") || "null",
+    );
 
-    localStorage.setItem("guest_token", token);
+    const id = Number(
+      localStorage.getItem("user_id") ||
+        user?.id ||
+        user?.user_id ||
+        user?.userId ||
+        loggedInUser?.id ||
+        loggedInUser?.user_id ||
+        loggedInUser?.userId ||
+        0,
+    );
+
+    return Number.isSafeInteger(id) && id > 0 ? id : 0;
+  } catch (error) {
+    console.error("Get User ID Error:", error);
+    return 0;
   }
-
-  return token;
 };
 
-// ==========================================
+// =====================================
+// API RESPONSE HELPER
+// =====================================
+
+const getApiItems = (result) => {
+  if (Array.isArray(result.cart)) return result.cart;
+  if (Array.isArray(result.data)) return result.data;
+  if (Array.isArray(result.items)) return result.items;
+
+  return [];
+};
+
+// =====================================
+// FORMAT CART ITEM
+// =====================================
+
+const formatCartItem = (item) => ({
+  ...item,
+
+  id: item.id,
+
+  productId: item.product_id ?? item.productId ?? item.product?.id ?? item.id,
+
+  name: item.name || item.product_name || item.title || "Product",
+
+  image: item.image || item.product_image || item.img || "",
+
+  price: Number(item.price ?? item.unit_price ?? 0),
+
+  quantity: Math.max(1, Number(item.quantity) || 1),
+});
+
+// =====================================
 // APP LAYOUT
-// ==========================================
+// =====================================
 
 function AppLayout() {
   const location = useLocation();
 
-  // Hide Header and Footer on Signup page
   const hideHeaderFooter = location.pathname === "/Signup";
 
-  // ========================================
-  // GLOBAL STATES
-  // ========================================
+  // =====================================
+  // STATES
+  // =====================================
 
   const [cartItems, setCartItems] = useState([]);
+  const [cartLoading, setCartLoading] = useState(true);
+  const [cartError, setCartError] = useState("");
 
   const [wishlistItems, setWishlistItems] = useState([]);
-
   const [orders, setOrders] = useState([]);
-
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState("");
+  const [ordersRetry, setOrdersRetry] = useState(0);
   const [products, setProducts] = useState([]);
 
   const [wishlistLoaded, setWishlistLoaded] = useState(false);
+  const [wishlistError, setWishlistError] = useState("");
+  const [wishlistRetry, setWishlistRetry] = useState(0);
+  const [wishlistOwnerId, setWishlistOwnerId] = useState("");
 
-  const [guestToken] = useState(getGuestToken);
+  const [userId, setUserId] = useState(getLoggedInUserId);
 
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("user"));
+  // =====================================
+  // REFS
+  // =====================================
 
-  // ========================================
-  // ADD TO CART
-  // ========================================
+  const latestWishlist = useRef([]);
 
-  const addToCart = useCallback((product) => {
-    setCartItems((previous) => {
-      const existing = previous.find(
-        (item) => String(item.id) === String(product.id),
+  // Prevent duplicate cart requests
+  const cartProcessing = useRef(new Set());
+
+  // =====================================
+  // UPDATE USER ID
+  // =====================================
+
+  useEffect(() => {
+    const updateUser = () => {
+      setUserId(getLoggedInUserId());
+    };
+
+    updateUser();
+
+    window.addEventListener("authChanged", updateUser);
+    window.addEventListener("storage", updateUser);
+
+    return () => {
+      window.removeEventListener("authChanged", updateUser);
+      window.removeEventListener("storage", updateUser);
+    };
+  }, [location.pathname]);
+
+  // =====================================
+  // CART API REQUEST HELPER
+  // =====================================
+
+  const cartRequest = useCallback(async (url, options = {}) => {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...options.headers,
+      },
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || "Cart API request failed.");
+    }
+
+    return result;
+  }, []);
+
+  // =====================================
+  // =====================================
+  // FETCH CART
+  // =====================================
+
+  const fetchCart = useCallback(async () => {
+    if (!userId) {
+      setCartItems([]);
+      setCartLoading(false);
+      setCartError("Please login to view your saved cart.");
+      return;
+    }
+
+    try {
+      setCartLoading(true);
+      setCartError("");
+
+      const result = await cartRequest(
+        `${CART_API}?user_id=${encodeURIComponent(userId)}`,
       );
 
-      if (existing) {
-        return previous.map((item) =>
-          String(item.id) === String(product.id)
-            ? {
-                ...item,
-                quantity:
-                  (Number(item.quantity) || 1) +
-                  (Number(product.quantity) || 1),
-              }
-            : item,
-        );
+      const formattedItems = getApiItems(result).map(formatCartItem);
+      setCartItems(formattedItems);
+    } catch (error) {
+      console.error("Cart Fetch Error:", error);
+      setCartError(error.message || "Unable to load cart.");
+    } finally {
+      setCartLoading(false);
+    }
+  }, [userId, cartRequest]);
+
+  // =====================================
+  // LOAD CART
+  // =====================================
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  // ADD PRODUCT TO CART
+  // ONLY ONE CART NOTIFICATION
+  // =====================================
+
+  const addToCart = useCallback(
+    async (product) => {
+      if (!userId) {
+        alert("Please login first to add products to your cart.");
+        return;
       }
 
-      return [
-        ...previous,
-        {
-          ...product,
-          quantity: Number(product.quantity) || 1,
-        },
-      ];
-    });
-  }, []);
+      const productId = Number(
+        product.product_id || product.productId || product.id,
+      );
 
-  // ========================================
-  // REMOVE FROM CART
-  // ========================================
+      if (!Number.isSafeInteger(productId) || productId <= 0) {
+        alert("Product ID is missing. Please check your product data.");
+        return;
+      }
 
-  const removeFromCart = useCallback((id) => {
-    setCartItems((previous) =>
-      previous.filter((product) => String(product.id) !== String(id)),
-    );
-  }, []);
+      // Prevent duplicate requests for the same product
+      const processingKey = `${userId}_${productId}`;
 
-  // ========================================
+      if (cartProcessing.current.has(processingKey)) {
+        return;
+      }
+
+      cartProcessing.current.add(processingKey);
+
+      const payload = {
+        user_id: userId,
+        product_id: productId,
+
+        name:
+          product.name || product.product_name || product.title || "Product",
+
+        image: product.image || product.product_image || product.img || "",
+
+        price: Number(product.price || product.unit_price || 0),
+
+        quantity: Math.max(1, Number(product.quantity) || 1),
+      };
+
+      try {
+        setCartError("");
+
+        // Save product in database
+        await cartRequest(CART_API, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+
+        // Refresh cart
+        await fetchCart();
+
+        // CREATE ONLY ONE NOTIFICATION
+        await createNotification({
+          title: "Product Added to Cart",
+          message: `${payload.name} has been successfully added to your cart.`,
+          type: "cart",
+        });
+
+        console.log("Product added to cart successfully.");
+      } catch (error) {
+        console.error("Add To Cart Error:", error);
+
+        alert(error.message || "Unable to add product to cart.");
+      } finally {
+        cartProcessing.current.delete(processingKey);
+      }
+    },
+    [userId, cartRequest, fetchCart],
+  );
+
+  // =====================================
+  // REMOVE PRODUCT FROM CART
+  // =====================================
+
+  const removeFromCart = useCallback(
+    async (cartRowId) => {
+      if (!userId) return;
+
+      try {
+        await cartRequest(CART_API, {
+          method: "DELETE",
+          body: JSON.stringify({
+            user_id: userId,
+            id: Number(cartRowId),
+          }),
+        });
+
+        await fetchCart();
+      } catch (error) {
+        console.error("Remove Cart Error:", error);
+
+        alert(error.message || "Unable to remove product.");
+      }
+    },
+    [userId, cartRequest, fetchCart],
+  );
+
+  // =====================================
   // UPDATE CART QUANTITY
-  // ========================================
+  // =====================================
 
-  const updateCartQuantity = useCallback((id, quantity) => {
-    setCartItems((previous) =>
-      previous.map((item) =>
-        String(item.id) === String(id)
-          ? {
-              ...item,
-              quantity: Math.max(1, Number(quantity) || 1),
-            }
-          : item,
-      ),
-    );
-  }, []);
+  const updateCartQuantity = useCallback(
+    async (cartRowId, quantity) => {
+      if (!userId) return;
 
-  // ========================================
-  // FETCH WISHLIST FROM DATABASE
-  // ========================================
+      const newQuantity = Math.max(1, Number(quantity) || 1);
+
+      try {
+        await cartRequest(CART_API, {
+          method: "PUT",
+          body: JSON.stringify({
+            user_id: userId,
+            id: Number(cartRowId),
+            quantity: newQuantity,
+          }),
+        });
+
+        await fetchCart();
+      } catch (error) {
+        console.error("Update Cart Error:", error);
+
+        alert(error.message || "Unable to update quantity.");
+      }
+    },
+    [userId, cartRequest, fetchCart],
+  );
+
+  // =====================================
+  // FETCH WISHLIST - CUSTOMER WISE
+  // =====================================
 
   useEffect(() => {
     const controller = new AbortController();
+    let active = true;
 
     const fetchWishlist = async () => {
+      // Clear the previous customer's wishlist immediately.
+      setWishlistItems([]);
+      latestWishlist.current = [];
+      setWishlistLoaded(false);
+      setWishlistError("");
+      setWishlistOwnerId("");
+
+      // Guests cannot fetch a customer's saved wishlist.
+      if (!userId) {
+        setWishlistLoaded(true);
+        return;
+      }
+
       try {
         const response = await fetch(
-          `${WISHLIST_API}?guest_token=${encodeURIComponent(guestToken)}`,
+          `${WISHLIST_API}?user_id=${encodeURIComponent(userId)}`,
           {
             method: "GET",
+            headers: { Accept: "application/json" },
             signal: controller.signal,
           },
         );
@@ -164,20 +389,33 @@ function AppLayout() {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          throw new Error(result.message || "Unable to fetch wishlist.");
+          throw new Error(result.message || "Wishlist fetch failed.");
         }
 
-        if (!Array.isArray(result.data)) {
-          throw new Error("Invalid wishlist data.");
-        }
+        const formattedItems = (
+          Array.isArray(result.data) ? result.data : []
+        ).map((item) => ({
+          ...item,
+          id: Number(item.id),
+          price: Number(item.price) || 0,
+          inStock:
+            item.inStock === true || item.inStock === 1 || item.inStock === "1",
+        }));
 
-        setWishlistItems(result.data);
-        setWishlistLoaded(true);
+        if (!active) return;
 
-        console.log("Wishlist loaded successfully:", result.data);
+        latestWishlist.current = formattedItems;
+        setWishlistItems(formattedItems);
+        setWishlistOwnerId(String(userId));
+        setWishlistError("");
       } catch (error) {
-        if (error.name !== "AbortError") {
+        if (error.name !== "AbortError" && active) {
           console.error("Wishlist Fetch Error:", error);
+          setWishlistError(error.message || "Unable to load wishlist.");
+        }
+      } finally {
+        if (active) {
+          setWishlistLoaded(true);
         }
       }
     };
@@ -185,52 +423,119 @@ function AppLayout() {
     fetchWishlist();
 
     return () => {
+      active = false;
       controller.abort();
     };
-  }, [guestToken]);
+  }, [userId, wishlistRetry]);
 
-  // ========================================
-  // UPDATE WISHLIST
-  // Supports both array and function updates
-  // ========================================
-
-  const updateWishlist = useCallback((value) => {
-    setWishlistItems((previous) => {
-      const updatedItems =
-        typeof value === "function" ? value(previous) : value;
-
-      return Array.isArray(updatedItems) ? updatedItems : previous;
-    });
-  }, []);
-
-  // ========================================
-  // SAVE WISHLIST TO DATABASE
-  // ========================================
+  // =====================================
+  // FETCH ORDER HISTORY - CUSTOMER WISE
+  // =====================================
 
   useEffect(() => {
-    // Wait until initial database fetch finishes.
-    if (!wishlistLoaded) return;
+    const controller = new AbortController();
+    let active = true;
+
+    const fetchOrders = async () => {
+      setOrders([]);
+      setOrdersError("");
+
+      if (!userId) {
+        setOrdersLoading(false);
+        return;
+      }
+
+      try {
+        setOrdersLoading(true);
+
+        const url = `${ORDERS_API}?user_id=${encodeURIComponent(userId)}`;
+        console.log("Order API URL:", url);
+        console.log("Logged-in User ID:", userId);
+
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+
+        const responseText = await response.text();
+        console.log("Order API Status:", response.status);
+        console.log("Order API Raw Response:", responseText);
+
+        let result;
+        try {
+          result = JSON.parse(responseText);
+        } catch {
+          throw new Error(
+            "order_history.php did not return valid JSON. Check PHP errors/output.",
+          );
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            result.message || `Order API HTTP error: ${response.status}`,
+          );
+        }
+
+        if (result.success !== true) {
+          throw new Error(result.message || "Unable to fetch order products.");
+        }
+
+        if (!active) return;
+
+        const rows = Array.isArray(result.data)
+          ? result.data
+          : Array.isArray(result.orders)
+            ? result.orders
+            : [];
+
+        setOrders(rows);
+        setOrdersError("");
+        console.log("Orders Loaded Successfully:", rows);
+      } catch (error) {
+        if (error.name !== "AbortError" && active) {
+          console.error("Order History Fetch Error:", error);
+          setOrdersError(error.message || "Unable to load order history.");
+        }
+      } finally {
+        if (active) setOrdersLoading(false);
+      }
+    };
+
+    fetchOrders();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [userId, ordersRetry, location.pathname]);
+
+  // =====================================
+  // SAVE WISHLIST - CUSTOMER WISE
+  // =====================================
+
+  useEffect(() => {
+    // Never save a guest wishlist or data belonging to another user.
+    if (!userId || !wishlistLoaded) return;
+    if (wishlistOwnerId !== String(userId)) return;
+    if (wishlistError) return;
 
     const controller = new AbortController();
 
     const saveWishlist = async () => {
       try {
-        const response = await fetch(
-          `${WISHLIST_API}?guest_token=${encodeURIComponent(guestToken)}`,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json",
-            },
-
-            body: JSON.stringify({
-              items: wishlistItems,
-            }),
-
-            signal: controller.signal,
+        const response = await fetch(WISHLIST_API, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
           },
-        );
+          body: JSON.stringify({
+            user_id: Number(userId),
+            items: wishlistItems,
+          }),
+          signal: controller.signal,
+        });
 
         const result = await response.json();
 
@@ -238,7 +543,7 @@ function AppLayout() {
           throw new Error(result.message || "Wishlist save failed.");
         }
 
-        console.log("Wishlist saved successfully:", result.data);
+        latestWishlist.current = wishlistItems;
       } catch (error) {
         if (error.name !== "AbortError") {
           console.error("Wishlist Save Error:", error);
@@ -246,63 +551,16 @@ function AppLayout() {
       }
     };
 
-    // Small delay to combine rapid wishlist changes.
-    const timer = setTimeout(saveWishlist, 300);
+    saveWishlist();
 
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [wishlistItems, wishlistLoaded, guestToken]);
+    return () => controller.abort();
+  }, [wishlistItems, wishlistLoaded, wishlistOwnerId, wishlistError, userId]);
 
-  // ========================================
-  // TOGGLE WISHLIST
-  // ADD / REMOVE PRODUCT
-  // ========================================
-
-  const toggleWishlist = useCallback(
-    (product) => {
-      updateWishlist((previous) => {
-        const exists = previous.some(
-          (item) => String(item.id) === String(product.id),
-        );
-
-        if (exists) {
-          return previous.filter(
-            (item) => String(item.id) !== String(product.id),
-          );
-        }
-
-        return [
-          ...previous,
-          {
-            ...product,
-            inStock: product.inStock ?? Number(product.stock) > 0,
-          },
-        ];
-      });
-    },
-    [updateWishlist],
-  );
-
-  // ========================================
-  // REMOVE FROM WISHLIST
-  // ========================================
-
-  const removeFromWishlist = useCallback(
-    (id) => {
-      updateWishlist((previous) =>
-        previous.filter((item) => String(item.id) !== String(id)),
-      );
-    },
-    [updateWishlist],
-  );
-
-  // ========================================
+  // =====================================
   // PLACE ORDER
-  // ========================================
+  // =====================================
 
-  const placeOrder = useCallback((orderData) => {
+  const placeOrder = (orderData) => {
     const newOrder = {
       id: `ORD-${Date.now()}`,
 
@@ -313,12 +571,10 @@ function AppLayout() {
       }),
 
       status: "Processing",
-
       payment: "Paid",
-
       total: orderData.total,
 
-      products: orderData.products.map((product) => ({
+      products: (orderData.products || []).map((product) => ({
         ...product,
         quantity: Number(product.quantity) || 1,
         price: Number(product.price) || 0,
@@ -326,50 +582,51 @@ function AppLayout() {
     };
 
     setOrders((previous) => [newOrder, ...previous]);
+    // Add order notification only after successful
+    // database order creation in your real order API.
+  };
 
-    setCartItems([]);
-  }, []);
+  // =====================================
+  // COMMON PROPS
+  // =====================================
 
-  // ========================================
-  // HEADER PROPS
-  // ========================================
+  const wishlistProps = {
+    wishlistItems,
+    onWishlistChange: setWishlistItems,
+    wishlistLoaded,
+    wishlistError,
+    onRetryWishlist: () => {
+      setWishlistRetry((previous) => previous + 1);
+    },
+  };
 
-  const headerProducts = [...products, ...immunityProducts];
+  const cartProps = {
+    onAddToCart: addToCart,
+  };
 
-  // ========================================
-  // APP UI
-  // ========================================
+  // =====================================
+  // MAIN UI
+  // =====================================
 
   return (
     <>
       <ScrollToTop />
 
-      {/* ==================================
-          HEADER
-      ================================== */}
-
       {!hideHeaderFooter && (
         <Header
-          products={headerProducts}
+          products={[...products, ...immunityProducts]}
           cartItems={cartItems}
           wishlistItems={wishlistItems}
         />
       )}
 
-      {/* ==================================
-          ROUTES
-      ================================== */}
-
       <Routes>
-        {/* HOME */}
-
         <Route
           path="/"
           element={
             <Home
-              onAddToCart={addToCart}
-              wishlistItems={wishlistItems}
-              onWishlistChange={updateWishlist}
+              {...cartProps}
+              {...wishlistProps}
               onProductsChange={setProducts}
             />
           }
@@ -379,133 +636,88 @@ function AppLayout() {
           path="/Home"
           element={
             <Home
-              onAddToCart={addToCart}
-              wishlistItems={wishlistItems}
-              onWishlistChange={updateWishlist}
+              {...cartProps}
+              {...wishlistProps}
               onProductsChange={setProducts}
             />
           }
         />
 
-        {/* SIGNUP */}
-
         <Route path="/Signup" element={<Signup />} />
-
-        {/* LOGIN */}
 
         <Route path="/Login" element={<Login />} />
 
-        {/* DEALS */}
-
-        <Route
-          path="/deals"
-          element={
-            <Deals
-              onAddToCart={addToCart}
-              wishlistItems={wishlistItems}
-              onWishlistChange={updateWishlist}
-            />
-          }
-        />
-
-        {/* CONTACT */}
+        <Route path="/deals" element={<Deals onAddToCart={addToCart} />} />
 
         <Route path="/contact" element={<Contact />} />
-
-        {/* BLOG */}
 
         <Route path="/Blog" element={<Blog />} />
 
         <Route path="/blog/:id" element={<BlogDetails />} />
 
-        {/* ABOUT */}
-
         <Route path="/AboutUs" element={<AboutUs />} />
-
-        {/* CARD */}
 
         <Route path="/CardEmp" element={<CardEmp />} />
 
-        {/* CATEGORY */}
-
         <Route
           path="/Category"
-          element={
-            <Category
-              onAddToCart={addToCart}
-              wishlistItems={wishlistItems}
-              onWishlistChange={updateWishlist}
-            />
-          }
+          element={<Category {...cartProps} {...wishlistProps} />}
         />
 
-        {/* NOTIFICATION */}
-
         <Route path="/Notification" element={<Notification />} />
-
-        {/* WISHLIST */}
 
         <Route
           path="/Wishlist"
           element={
             <Wishlist
-              wishlistItems={wishlistItems}
-              onWishlistChange={updateWishlist}
+              {...wishlistProps}
               onAddToCart={addToCart}
-              onRemoveFromWishlist={removeFromWishlist}
               orders={orders}
             />
           }
         />
 
-        {/* VIEW PRODUCT */}
-
         <Route
           path="/ViewProduct"
-          element={
-            <ViewProduct
-              onAddToCart={addToCart}
-              wishlistItems={wishlistItems}
-              onWishlistChange={updateWishlist}
-            />
-          }
+          element={<ViewProduct {...cartProps} {...wishlistProps} />}
         />
-
-        {/* PRODUCT CARD */}
 
         <Route
           path="/ProductCard"
           element={
             <ProductCard
+              {...cartProps}
+              {...wishlistProps}
               onProductsChange={setProducts}
-              onAddToCart={addToCart}
-              wishlistItems={wishlistItems}
-              onWishlistChange={updateWishlist}
             />
           }
         />
 
-        {/* ORDER HISTORY */}
-
         <Route
           path="/OrderHistory"
-          element={<OrderHistory orders={orders} />}
+          element={
+            <OrderHistory
+              orders={orders}
+              loading={ordersLoading}
+              error={ordersError}
+              onRetry={() => setOrdersRetry((prev) => prev + 1)}
+            />
+          }
         />
-
-        {/* MY CART */}
 
         <Route
           path="/Mycard"
           element={
             <MyCard
               cartItems={cartItems}
+              cartLoading={cartLoading}
+              cartError={cartError}
               onRemove={removeFromCart}
               onUpdateQuantity={updateCartQuantity}
+              onRetry={fetchCart}
             />
           }
         />
-
-        {/* CHECKOUT */}
 
         <Route
           path="/Checkout"
@@ -519,18 +731,12 @@ function AppLayout() {
           }
         />
 
-        {/* PAYMENT */}
-
         <Route
           path="/Payment"
           element={<Payment onPlaceOrder={placeOrder} />}
         />
-
-        {/* FOOTER */}
-
+        <Route path="/Account" element={<Account />} />
         <Route path="/Footer" element={<Footer />} />
-
-        {/* MOBILE FOOTER */}
 
         <Route
           path="/MenuFooter"
@@ -538,8 +744,6 @@ function AppLayout() {
             <MenuFooter cartItems={cartItems} wishlistItems={wishlistItems} />
           }
         />
-
-        {/* STATIC PAGES */}
 
         <Route path="/about" element={<h1>About Us</h1>} />
 
@@ -557,10 +761,6 @@ function AppLayout() {
         <Route path="/publications" element={<h1>Publications</h1>} />
       </Routes>
 
-      {/* ==================================
-          FOOTER
-      ================================== */}
-
       {!hideHeaderFooter && (
         <>
           <Footer />
@@ -572,9 +772,9 @@ function AppLayout() {
   );
 }
 
-// ==========================================
-// MAIN APP
-// ==========================================
+// =====================================
+// APP
+// =====================================
 
 function App() {
   return (

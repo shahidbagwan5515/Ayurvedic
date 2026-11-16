@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ProductCard.css";
-import PrdInquary from "../DetailsCard/PrdInquary";
 
+import PrdInquary from "../DetailsCard/PrdInquary";
 import cardimg1 from "../../assets/banner-1.jpeg";
 
 import Snackbar from "@mui/material/Snackbar";
@@ -10,6 +10,8 @@ import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import FavoriteOutlinedIcon from "@mui/icons-material/FavoriteOutlined";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCartOutlined";
+
+import { createNotification } from "../../utils/notificationService";
 
 // =====================================
 // API CONFIGURATION
@@ -21,6 +23,8 @@ const API_URL =
 const STOCK_API_URL =
   "https://plyexpert.com/shaheedApis/Backend-dashboard/api/stock.php";
 
+// IMPORTANT:
+// Production image URL ke liye apna actual backend domain use karein.
 const IMAGE_BASE_URL = "http://localhost";
 
 // =====================================
@@ -32,11 +36,17 @@ const getImageUrl = (image) => {
     return cardimg1;
   }
 
-  if (image.startsWith("http://") || image.startsWith("https://")) {
-    return image;
+  const cleanImage = image.trim();
+
+  if (
+    cleanImage.startsWith("http://") ||
+    cleanImage.startsWith("https://") ||
+    cleanImage.startsWith("data:image/")
+  ) {
+    return cleanImage;
   }
 
-  return `${IMAGE_BASE_URL}/${image.replace(/^\/+/, "")}`;
+  return `${IMAGE_BASE_URL}/${cleanImage.replace(/^\/+/, "")}`;
 };
 
 // =====================================
@@ -54,6 +64,16 @@ const getStockValue = (product) => {
   const stock = Number(value);
 
   return Number.isFinite(stock) ? Math.max(0, stock) : 0;
+};
+
+// =====================================
+// NORMALIZE SKU
+// =====================================
+
+const normalizeSKU = (value) => {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
 };
 
 // =====================================
@@ -82,9 +102,20 @@ function ProductCard({
 
   const [quantities, setQuantities] = useState({});
 
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const scrollRef = useRef(null);
 
   const navigate = useNavigate();
+
+  // =====================================
+  // SNACKBAR HELPER
+  // =====================================
+
+  const showMessage = useCallback((message) => {
+    setCartMessage(message);
+    setSnackbarOpen(true);
+  }, []);
 
   // =====================================
   // FETCH PRODUCT + STOCK API
@@ -107,7 +138,8 @@ function ProductCard({
           signal: controller.signal,
         };
 
-        // Fetch both APIs
+        // FETCH BOTH APIS
+
         const [productResponse, stockResponse] = await Promise.all([
           fetch(API_URL, requestOptions),
           fetch(STOCK_API_URL, requestOptions),
@@ -124,18 +156,22 @@ function ProductCard({
         }
 
         // =====================================
-        // FETCH STOCK DATA
+        // STOCK API DATA
         // =====================================
 
         let stockData = [];
 
         if (stockResponse.ok) {
-          const stockResult = await stockResponse.json();
+          try {
+            const stockResult = await stockResponse.json();
 
-          console.log("STOCK API RESPONSE:", stockResult);
+            console.log("STOCK API RESPONSE:", stockResult);
 
-          if (stockResult.success && Array.isArray(stockResult.data)) {
-            stockData = stockResult.data;
+            if (stockResult.success && Array.isArray(stockResult.data)) {
+              stockData = stockResult.data;
+            }
+          } catch (stockError) {
+            console.warn("Stock API JSON Error:", stockError);
           }
         } else {
           console.warn("Stock API unavailable:", stockResponse.status);
@@ -144,32 +180,32 @@ function ProductCard({
         console.log("PRODUCT API RESPONSE:", productResult);
 
         // =====================================
-        // NORMALIZE SKU
-        // =====================================
-
-        const normalize = (value) =>
-          String(value || "")
-            .trim()
-            .toLowerCase();
-
-        // =====================================
         // FORMAT PRODUCTS
         // =====================================
 
         const formattedProducts = productResult.data
+
           .filter(
-            (product) => String(product.status).toLowerCase() === "active",
+            (product) =>
+              String(product.status || "").toLowerCase() === "active",
           )
+
           .map((product) => {
             const images = Array.isArray(product.images) ? product.images : [];
 
-            // Match product SKU with stock product_code
-            const matchingStock = stockData.find(
-              (stockItem) =>
-                normalize(stockItem.product_code) === normalize(product.sku),
-            );
+            // MATCH SKU WITH PRODUCT CODE
 
-            // Use actual stock API quantity when SKU matches
+            const productSKU = normalizeSKU(product.sku);
+
+            const matchingStock = productSKU
+              ? stockData.find(
+                  (stockItem) =>
+                    normalizeSKU(stockItem.product_code) === productSKU,
+                )
+              : null;
+
+            // USE STOCK API QUANTITY
+
             const availableStock = matchingStock
               ? getStockValue(matchingStock)
               : getStockValue(product);
@@ -199,7 +235,7 @@ function ProductCard({
 
               sizes: [],
 
-              oldPrice: null,
+              oldPrice: Number(product.oldPrice) || null,
             };
 
             console.log(
@@ -218,10 +254,12 @@ function ProductCard({
             const updated = {};
 
             formattedProducts.forEach((product) => {
-              updated[product.id] = Math.min(
-                previous[product.id] || 1,
-                Math.max(1, product.stock),
-              );
+              const previousQuantity = previous[product.id] || 1;
+
+              updated[product.id] =
+                product.stock > 0
+                  ? Math.min(previousQuantity, product.stock)
+                  : 1;
             });
 
             return updated;
@@ -245,7 +283,7 @@ function ProductCard({
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [refreshKey]);
 
   // =====================================
   // SEND PRODUCTS TO PARENT
@@ -254,6 +292,14 @@ function ProductCard({
   useEffect(() => {
     onProductsChange?.(products);
   }, [products, onProductsChange]);
+
+  // =====================================
+  // RETRY API
+  // =====================================
+
+  const retryProducts = () => {
+    setRefreshKey((previous) => previous + 1);
+  };
 
   // =====================================
   // AUTO SCROLL
@@ -326,9 +372,7 @@ function ProductCard({
       const current = previous[id] || 1;
 
       if (current >= product.stock) {
-        setCartMessage("Maximum available stock reached!");
-        setSnackbarOpen(true);
-
+        showMessage("Maximum available stock reached!");
         return previous;
       }
 
@@ -358,20 +402,17 @@ function ProductCard({
     const quantity = quantities[product.id] || 1;
 
     if (product.stock <= 0) {
-      setCartMessage("Product is out of stock!");
-      setSnackbarOpen(true);
+      showMessage("Product is out of stock!");
       return;
     }
 
     if (quantity > product.stock) {
-      setCartMessage("Requested quantity is not available!");
-      setSnackbarOpen(true);
+      showMessage("Requested quantity is not available!");
       return;
     }
 
     if (typeof onAddToCart !== "function") {
-      setCartMessage("Cart functionality is not connected.");
-      setSnackbarOpen(true);
+      showMessage("Cart functionality is not connected.");
       return;
     }
 
@@ -381,17 +422,16 @@ function ProductCard({
       selectedSize: product.sizes?.[0] || "",
     });
 
-    setCartMessage(`${product.name} added to cart successfully!`);
-
-    setSnackbarOpen(true);
+    showMessage(`${product.name} added to cart successfully!`);
   };
 
   // =====================================
   // ADD / REMOVE WISHLIST
   // =====================================
 
-  const toggleWishlist = (product) => {
+  const toggleWishlist = async (product) => {
     // CHECK LOGIN
+
     const loggedInUser = localStorage.getItem("loggedInUser");
 
     if (!loggedInUser) {
@@ -401,14 +441,17 @@ function ProductCard({
     }
 
     if (typeof onWishlistChange !== "function") {
-      setCartMessage("Wishlist functionality is not connected.");
-      setSnackbarOpen(true);
+      showMessage("Wishlist functionality is not connected.");
       return;
     }
+
+    // CHECK EXISTING PRODUCT
 
     const exists = wishlistItems.some(
       (item) => String(item.id) === String(product.id),
     );
+
+    // UPDATE WISHLIST
 
     if (exists) {
       onWishlistChange((previous) =>
@@ -421,16 +464,53 @@ function ProductCard({
         inStock: Number(product.stock) > 0,
       };
 
-      onWishlistChange((previous) => [...previous, wishlistProduct]);
+      onWishlistChange((previous) => [
+        ...previous.filter((item) => String(item.id) !== String(product.id)),
+        wishlistProduct,
+      ]);
     }
 
-    setCartMessage(
+    // =====================================
+    // CREATE NOTIFICATION
+    // =====================================
+
+    try {
+      await createNotification({
+        title: exists
+          ? "Product Removed from Wishlist"
+          : "Product Added to Wishlist",
+
+        message: exists
+          ? `${product.name} has been removed from your wishlist.`
+          : `${product.name} has been added to your wishlist.`,
+
+        type: "wishlist",
+      });
+    } catch (notificationError) {
+      console.error("Wishlist Notification Error:", notificationError);
+    }
+
+    // =====================================
+    // SUCCESS MESSAGE
+    // =====================================
+
+    showMessage(
       exists
         ? `${product.name} removed from wishlist!`
         : `${product.name} added to wishlist!`,
     );
+  };
 
-    setSnackbarOpen(true);
+  // =====================================
+  // PRODUCT CLICK
+  // =====================================
+
+  const handleProductClick = (product) => {
+    if (typeof onProductClick === "function") {
+      onProductClick(product);
+    } else {
+      setSelectedProduct(product);
+    }
   };
 
   // =====================================
@@ -450,7 +530,7 @@ function ProductCard({
       <div className="product-error">
         <p>{error}</p>
 
-        <button type="button" onClick={() => window.location.reload()}>
+        <button type="button" onClick={retryProducts}>
           Try Again
         </button>
       </div>
@@ -505,17 +585,12 @@ function ProductCard({
                 <img
                   src={product.image}
                   alt={product.name}
+                  loading="lazy"
                   onError={(event) => {
                     event.currentTarget.onerror = null;
                     event.currentTarget.src = cardimg1;
                   }}
-                  onClick={() => {
-                    if (onProductClick) {
-                      onProductClick(product);
-                    } else {
-                      setSelectedProduct(product);
-                    }
-                  }}
+                  onClick={() => handleProductClick(product)}
                 />
 
                 {/* DISCOUNT */}
@@ -562,19 +637,6 @@ function ProductCard({
                 <p className="product-description">{product.description}</p>
 
                 {/* STOCK */}
-
-                <p
-                  className="product-stock-info"
-                  style={{
-                    color: inStock ? "#16834a" : "#dc2626",
-                    fontWeight: 600,
-                    fontSize: "13px",
-                  }}
-                >
-                  {inStock
-                    ? `Available Stock: ${product.stock}`
-                    : "Out of Stock"}
-                </p>
 
                 {/* PRICE AND QUANTITY */}
 
@@ -656,6 +718,8 @@ function ProductCard({
             sx: {
               backgroundColor: "#176b45",
               color: "white",
+              borderRadius: "10px",
+              fontWeight: 500,
             },
           },
         }}

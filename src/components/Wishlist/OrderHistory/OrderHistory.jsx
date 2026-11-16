@@ -2,54 +2,58 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./OrderHistory.css";
 
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-
-import Prdimg1 from "../../../assets/nimbapatradi_churnam.jpg";
-import Prdimg2 from "../../../assets/psorakot.png";
-const initialOrders = [
-  {
-    id: "ORD-2026-001",
-    date: "18 Oct 2026",
-    status: "Delivered",
-    total: 128.57,
-    payment: "Paid",
-    products: [
-      {
-        id: 1,
-        name: "Kottakkal Ayurveda Skin Protection Soap (3+1)",
-        image: Prdimg1,
-        quantity: 1,
-        price: 128.57,
-      },
-    ],
-  },
-  {
-    id: "ORD-2026-002",
-    date: "12 Oct 2026",
-    status: "Processing",
-    total: 150,
-    payment: "Paid",
-    products: [
-      {
-        id: 2,
-        name: "Kottakkal Ayurveda Toothpaste",
-        image: Prdimg2,
-        quantity: 1,
-        price: 150,
-      },
-    ],
-  },
-];
-
-function OrderHistory({ orders = [] }) {
+function OrderHistory({ orders = [], loading = false, error = "", onRetry }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const formatDate = (value) => {
+    if (!value) return "N/A";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const formatPrice = (value) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(Number(value) || 0);
+
+  if (loading) {
+    return (
+      <section className="order-history">
+        <div className="order-empty">
+          <h2>Loading your orders...</h2>
+          <p>Please wait while we fetch your order history.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="order-history">
+        <div className="order-empty">
+          <h2>Unable to load orders</h2>
+          <p>{error}</p>
+          <button type="button" onClick={onRetry}>
+            Try Again
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="order-history">
       <div className="order-history-header">
         <p>Track, manage and view your recent orders.</p>
-
         <Link to="/" className="order-shop-btn">
           Continue Shopping
         </Link>
@@ -59,68 +63,62 @@ function OrderHistory({ orders = [] }) {
         <span>{orders.length} orders</span>
       </div>
 
-      {orders.length === 0 ? (
-        <div className="order-empty">
-          <div className="order-empty-icon">▣</div>
-          <h2>No orders found</h2>
-          <p>Your orders will appear here when you make a purchase.</p>
+      <div className="order-history-list">
+        {orders.map((order) => {
+          const orderKey = order.id;
+          const isExpanded = selectedOrder === orderKey;
+          const products = Array.isArray(order.products) ? order.products : [];
 
-          <Link to="/" className="order-shop-btn">
-            Start Shopping
-          </Link>
-        </div>
-      ) : (
-        <div className="order-history-list">
-          {orders.map((order) => (
-            <article className="order-history-card" key={order.id}>
+          return (
+            <article className="order-history-card" key={orderKey}>
               <div className="order-card-top">
                 <div>
                   <span className="order-muted">Order ID</span>
-                  <h3>{order.id}</h3>
+                  <h3>{order.orderNumber || order.id}</h3>
                 </div>
 
                 <span className="order-status status-processing">
                   <span className="status-dot" />
-                  {order.status}
+                  {order.status || "Processing"}
                 </span>
               </div>
 
               <div className="order-card-info">
                 <div>
                   <span className="order-muted">Order Date</span>
-                  <p>{order.date}</p>
+                  <p>{formatDate(order.date)}</p>
                 </div>
 
                 <div>
                   <span className="order-muted">Payment</span>
-                  <p>{order.payment}</p>
+                  <p>{order.payment || "Pending"}</p>
                 </div>
 
                 <div>
                   <span className="order-muted">Total Amount</span>
-                  <p className="order-total">
-                    ₹{Number(order.total).toFixed(2)}
-                  </p>
+                  <p className="order-total">{formatPrice(order.total)}</p>
                 </div>
               </div>
 
               <div className="order-products">
-                {order.products.map((product, index) => (
+                {products.map((product, index) => (
                   <div className="order-product" key={product.id ?? index}>
                     <div className="order-product-image">
-                      <img
-                        src={product.image || product.img}
-                        alt={product.name || "Product"}
-                        onError={(e) => {
-                          e.currentTarget.style.visibility = "hidden";
-                        }}
-                      />
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name || "Product"}
+                          onError={(event) => {
+                            event.currentTarget.style.visibility = "hidden";
+                          }}
+                        />
+                      ) : null}
                     </div>
 
                     <div className="order-product-details">
-                      <h4>{product.name}</h4>
-                      <p>Qty: {product.quantity}</p>
-                      <strong>₹{Number(product.price).toFixed(2)}</strong>
+                      <h4>{product.name || "Product"}</h4>
+                      <p>Qty: {product.quantity || 1}</p>
+                      <strong>{formatPrice(product.price)}</strong>
                     </div>
                   </div>
                 ))}
@@ -130,14 +128,10 @@ function OrderHistory({ orders = [] }) {
                 <button
                   type="button"
                   className="order-details-btn"
-                  onClick={() =>
-                    setSelectedOrder(
-                      selectedOrder === order.id ? null : order.id,
-                    )
-                  }
+                  onClick={() => setSelectedOrder(isExpanded ? null : orderKey)}
                 >
-                  {selectedOrder === order.id ? "Hide Details" : "View Details"}
-                  <span>{selectedOrder === order.id ? "⌃" : "›"}</span>
+                  {isExpanded ? "Hide Details" : "View Details"}
+                  <span>{isExpanded ? "⌃" : "›"}</span>
                 </button>
 
                 <Link to="/" className="order-again-btn">
@@ -145,20 +139,24 @@ function OrderHistory({ orders = [] }) {
                 </Link>
               </div>
 
-              {selectedOrder === order.id && (
+              {isExpanded && (
                 <div className="order-expanded-details">
                   <h4>Order Details</h4>
-                  <p>Order Number: {order.id}</p>
-                  <p>Order Date: {order.date}</p>
-                  <p>Payment Status: {order.payment}</p>
-                  <p>Order Status: {order.status}</p>
-                  <p>Total Paid: ₹{Number(order.total).toFixed(2)}</p>
+                  <p>Order Number: {order.orderNumber || order.id}</p>
+                  <p>Order Date: {formatDate(order.date)}</p>
+                  <p>Payment Status: {order.payment || "Pending"}</p>
+                  <p>Order Status: {order.status || "Processing"}</p>
+                  <p>Payment Method: {order.paymentMethod || "N/A"}</p>
+                  <p>Subtotal: {formatPrice(order.subtotal)}</p>
+                  <p>Discount: {formatPrice(order.discount)}</p>
+                  <p>GST: {formatPrice(order.gst)}</p>
+                  <p>Total Paid: {formatPrice(order.total)}</p>
                 </div>
               )}
             </article>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
     </section>
   );
 }

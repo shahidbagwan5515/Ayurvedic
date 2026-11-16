@@ -4,6 +4,7 @@ import "./Header.css";
 
 import { styled } from "@mui/material/styles";
 import Badge, { badgeClasses } from "@mui/material/Badge";
+
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCartOutlined";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
@@ -18,6 +19,7 @@ import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import NotificationsActiveOutlinedIcon from "@mui/icons-material/NotificationsActiveOutlined";
 import ContactPageOutlinedIcon from "@mui/icons-material/ContactPageOutlined";
+
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
@@ -32,9 +34,50 @@ import ListItem from "@mui/material/ListItem";
 import InputBase from "@mui/material/InputBase";
 
 import Login from "../Login/Login";
+
 import Companylog from "../../assets/AjitlabLogo.png";
 import Companylog2 from "../../assets/navLog.png";
-import { NotificationsOutlined } from "@mui/icons-material";
+
+// =====================================
+// NOTIFICATION API
+// =====================================
+
+const NOTIFICATION_API =
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/notifications.php";
+
+// =====================================
+// GET LOGGED-IN USER
+// =====================================
+
+const getLoggedInUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("loggedInUser")) || null;
+  } catch {
+    return null;
+  }
+};
+
+// =====================================
+// GET LOGGED-IN USER ID
+// =====================================
+
+const getLoggedInUserId = () => {
+  const user = getLoggedInUser();
+
+  const id = Number(
+    localStorage.getItem("user_id") ||
+      user?.id ||
+      user?.user_id ||
+      user?.userId ||
+      0,
+  );
+
+  return Number.isSafeInteger(id) && id > 0 ? id : 0;
+};
+
+// =====================================
+// MENU ITEMS
+// =====================================
 
 const menuItems = [
   { label: "Arishtas and Asavas", link: "/Category" },
@@ -68,6 +111,10 @@ const menuItems = [
   { label: "Publications", link: "/publications" },
 ];
 
+// =====================================
+// CUSTOM BADGE
+// =====================================
+
 const CartBadge = styled(Badge)`
   & .${badgeClasses.badge} {
     top: -8px;
@@ -75,40 +122,59 @@ const CartBadge = styled(Badge)`
   }
 `;
 
+// =====================================
+// HEADER COMPONENT
+// =====================================
+
 function Header({ cartItems = [], wishlistItems = [], products = [] }) {
   const navigate = useNavigate();
   const searchRef = useRef(null);
+
+  // =====================================
+  // STATES
+  // =====================================
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
 
+  const [notificationCount, setNotificationCount] = useState(0);
+
   const [showShopCategories, setShowShopCategories] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
 
-  const [user, setUser] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("loggedInUser")) || null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState(getLoggedInUser);
 
   const [userAnchorEl, setUserAnchorEl] = useState(null);
 
+  const menuOpen = Boolean(anchorEl);
   const userMenuOpen = Boolean(userAnchorEl);
+
+  // =====================================
+  // USER ID
+  // =====================================
+
+  const userId = Number(
+    localStorage.getItem("user_id") ||
+      user?.id ||
+      user?.user_id ||
+      user?.userId ||
+      0,
+  );
+
+  // =====================================
+  // UPDATE USER AFTER LOGIN / LOGOUT
+  // =====================================
 
   useEffect(() => {
     const updateUser = () => {
-      try {
-        const savedUser = JSON.parse(localStorage.getItem("loggedInUser"));
+      const savedUser = getLoggedInUser();
 
-        setUser(savedUser);
-      } catch {
-        setUser(null);
-      }
+      setUser(savedUser);
+      setNotificationCount(0);
     };
 
     window.addEventListener("authChanged", updateUser);
@@ -120,7 +186,86 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
     };
   }, []);
 
-  const menuOpen = Boolean(anchorEl);
+  // =====================================
+  // FETCH CUSTOMER NOTIFICATION COUNT
+  // =====================================
+
+  useEffect(() => {
+    let isMounted = true;
+    let requestController = null;
+
+    const currentUserId = userId;
+
+    const fetchNotificationCount = async () => {
+      if (!currentUserId || currentUserId <= 0) {
+        if (isMounted) {
+          setNotificationCount(0);
+        }
+        return;
+      }
+
+      // Cancel previous request
+      if (requestController) {
+        requestController.abort();
+      }
+
+      requestController = new AbortController();
+
+      try {
+        const response = await fetch(
+          `${NOTIFICATION_API}?user_id=${encodeURIComponent(currentUserId)}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            signal: requestController.signal,
+          },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Notification fetch failed");
+        }
+
+        // Do not apply an old customer's response
+        if (
+          isMounted &&
+          Number(localStorage.getItem("user_id") || currentUserId) ===
+            currentUserId
+        ) {
+          setNotificationCount(Number(result.data?.unread_count || 0));
+        }
+      } catch (error) {
+        if (error.name !== "AbortError" && isMounted) {
+          console.error("Notification Count Error:", error);
+        }
+      }
+    };
+
+    fetchNotificationCount();
+
+    window.addEventListener("notificationUpdated", fetchNotificationCount);
+
+    const interval = window.setInterval(fetchNotificationCount, 30000);
+
+    return () => {
+      isMounted = false;
+
+      if (requestController) {
+        requestController.abort();
+      }
+
+      window.removeEventListener("notificationUpdated", fetchNotificationCount);
+
+      window.clearInterval(interval);
+    };
+  }, [userId]);
+
+  // =====================================
+  // SEARCH PRODUCTS
+  // =====================================
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -132,7 +277,7 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
       product.category,
       product.description,
       product.sku,
-      ...(product.keywords || []),
+      ...(Array.isArray(product.keywords) ? product.keywords : []),
     ]
       .filter(Boolean)
       .join(" ")
@@ -140,6 +285,28 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
 
     return searchableText.includes(normalizedSearch);
   });
+
+  // =====================================
+  // SELECT PRODUCT
+  // =====================================
+
+  const selectProduct = (product) => {
+    setShowSuggestions(false);
+    setActiveSuggestion(-1);
+    setSearchTerm(product.name);
+
+    navigate("/ViewProduct", {
+      state: {
+        searchTerm: product.name,
+        productId: product.id,
+        product,
+      },
+    });
+  };
+
+  // =====================================
+  // HANDLE SEARCH
+  // =====================================
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -157,7 +324,11 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
       setShowSuggestions(true);
     }
   };
-  // Close suggestions on outside click
+
+  // =====================================
+  // CLOSE SEARCH SUGGESTIONS
+  // =====================================
+
   useEffect(() => {
     const handleOutsideClick = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -173,19 +344,10 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
     };
   }, []);
 
-  const selectProduct = (product) => {
-    setShowSuggestions(false);
-    setActiveSuggestion(-1);
-    setSearchTerm(product.name);
+  // =====================================
+  // SHOP MENU
+  // =====================================
 
-    navigate("/ViewProduct", {
-      state: {
-        searchTerm: product.name,
-        productId: product.id,
-        product,
-      },
-    });
-  };
   const openShopMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -194,30 +356,56 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
     setAnchorEl(null);
   };
 
+  // =====================================
+  // DRAWER
+  // =====================================
+
   const closeDrawer = () => {
     setDrawerOpen(false);
   };
+
+  // =====================================
+  // LOGIN
+  // =====================================
 
   const openLogin = () => {
     setDrawerOpen(false);
     setLoginOpen(true);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("loggedInUser");
+  // =====================================
+  // LOGOUT
+  // =====================================
 
+  const handleLogout = () => {
+    // Remove all customer login data
+    localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user");
+
+    // Reset Header states
     setUser(null);
+    setNotificationCount(0);
     setUserAnchorEl(null);
     setLoginOpen(false);
+    setDrawerOpen(false);
 
+    // Notify other components
     window.dispatchEvent(new Event("authChanged"));
+    window.dispatchEvent(new Event("notificationUpdated"));
 
-    navigate("/");
+    // Redirect to Home
+    navigate("/", { replace: true });
   };
+
+  // =====================================
+  // RETURN UI
+  // =====================================
 
   return (
     <>
       {/* TOP SUPPORT BAR */}
+
       <nav className="navbar-container">
         <div className="leftNav">
           <Link to="/" aria-label="Go to home">
@@ -257,9 +445,11 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
       </nav>
 
       {/* MAIN NAVIGATION */}
+
       <AppBar position="static" className="main-appbar">
         <Toolbar className="header">
           {/* DESKTOP LEFT NAVIGATION */}
+
           <div className="header-left">
             <Button
               aria-haspopup="true"
@@ -276,8 +466,12 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               open={menuOpen}
               onClose={closeShopMenu}
               slotProps={{
-                paper: { className: "shop-menu-paper" },
-                list: { "aria-label": "Product categories" },
+                paper: {
+                  className: "shop-menu-paper",
+                },
+                list: {
+                  "aria-label": "Product categories",
+                },
               }}
             >
               {menuItems.map((item) => (
@@ -300,7 +494,8 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
             <Link to="/AboutUs">About</Link>
           </div>
 
-          {/* SEARCH Input */}
+          {/* SEARCH INPUT */}
+
           <div className="header-center">
             <form
               className="search-box"
@@ -330,6 +525,7 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
                     filteredProducts.length > 0
                   ) {
                     event.preventDefault();
+
                     setShowSuggestions(true);
 
                     setActiveSuggestion((previous) =>
@@ -367,6 +563,8 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
                 </button>
               )}
 
+              {/* SEARCH SUGGESTIONS */}
+
               {showSuggestions && normalizedSearch && (
                 <div className="search-suggestions">
                   <div className="search-dropdown-heading">
@@ -400,6 +598,7 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
 
                         <span className="suggestion-product-info">
                           <strong>{product.name}</strong>
+
                           <small>
                             {product.category || product.sku || "Product"}
                           </small>
@@ -425,46 +624,59 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
           </div>
 
           {/* RIGHT ACTIONS */}
+
           <div className="header-right">
             <div className="icons-left">
+              {/* WISHLIST */}
+
               <Link to="/Wishlist" className="header-action-link">
                 <IconButton aria-label="Wishlist">
                   <FavoriteBorderIcon />
+
                   <CartBadge
                     badgeContent={wishlistItems.length}
                     color="error"
                     overlap="circular"
                     showZero={false}
                   />
+
                   <span>Wishlist</span>
                 </IconButton>
               </Link>
 
+              {/* CART */}
+
               <Link to="/Mycard" className="header-action-link">
                 <IconButton aria-label="My Cart">
                   <ShoppingCartIcon />
+
                   <CartBadge
                     badgeContent={cartItems.length}
                     color="error"
                     overlap="circular"
                     showZero={false}
                   />
+
                   <span>My Cart</span>
                 </IconButton>
               </Link>
 
+              {/* NOTIFICATIONS */}
+
               <Link to="/Notification" className="header-action-link">
                 <IconButton aria-label="My Notifications">
                   <Badge
-                    badgeContent={5}
+                    badgeContent={notificationCount}
                     color="error"
                     overlap="circular"
                     showZero={false}
                   >
-                    <NotificationsOutlined />
+                    <NotificationsActiveOutlinedIcon />
                   </Badge>
                 </IconButton>
               </Link>
+
+              {/* USER LOGIN */}
 
               {user ? (
                 <>
@@ -474,7 +686,7 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
                     startIcon={<PersonOutlinedIcon />}
                     endIcon={<KeyboardArrowDownIcon />}
                   >
-                    {user.name}
+                    {user.name || user.email || "My Account"}
                   </Button>
 
                   <Menu
@@ -489,7 +701,7 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
                     <MenuItem
                       onClick={() => {
                         setUserAnchorEl(null);
-                        navigate("/Profile");
+                        navigate("/Account");
                       }}
                     >
                       My Profile
@@ -511,6 +723,7 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
             </div>
 
             {/* MOBILE MENU BUTTON */}
+
             <Box className="sidebar-btn">
               <IconButton
                 aria-label="Open mobile menu"
@@ -524,10 +737,12 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
       </AppBar>
 
       {/* MOBILE DRAWER */}
+
       <Drawer anchor="right" open={drawerOpen} onClose={closeDrawer}>
         <Box className="mobile-drawer">
           <div className="drawer-header">
-            <h3>Ayurvedic </h3>
+            <h3>Ayurvedic</h3>
+
             <IconButton onClick={closeDrawer} aria-label="Close mobile menu">
               ×
             </IconButton>
@@ -536,6 +751,8 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
           <Divider />
 
           <List className="mobile-menu-list">
+            {/* HOME */}
+
             <ListItem
               component={Link}
               to="/"
@@ -545,6 +762,8 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               <HomeOutlinedIcon />
               <span>Home</span>
             </ListItem>
+
+            {/* DEALS */}
 
             <ListItem
               component={Link}
@@ -556,6 +775,8 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               <span>Deals</span>
             </ListItem>
 
+            {/* BLOG */}
+
             <ListItem
               component={Link}
               to="/Blog"
@@ -566,6 +787,8 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               <span>Blog</span>
             </ListItem>
 
+            {/* CONTACT */}
+
             <ListItem
               component={Link}
               to="/contact"
@@ -575,6 +798,9 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               <ContactPageOutlinedIcon />
               <span>Contact Us</span>
             </ListItem>
+
+            {/* ABOUT */}
+
             <ListItem
               component={Link}
               to="/AboutUs"
@@ -585,6 +811,8 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               <span>About Us</span>
             </ListItem>
 
+            {/* NOTIFICATIONS */}
+
             <ListItem
               component={Link}
               to="/Notification"
@@ -592,8 +820,10 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               className="mobile-link"
             >
               <NotificationsActiveOutlinedIcon />
-              <span>Notification ({cartItems.length})</span>
+              <span>Notification ({notificationCount})</span>
             </ListItem>
+
+            {/* WISHLIST */}
 
             <ListItem
               component={Link}
@@ -605,6 +835,8 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               <span>Wishlist ({wishlistItems.length})</span>
             </ListItem>
 
+            {/* CART */}
+
             <ListItem
               component={Link}
               to="/Mycard"
@@ -614,11 +846,42 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
               <ShoppingCartIcon />
               <span>My Cart ({cartItems.length})</span>
             </ListItem>
+
+            {/* LOGIN / LOGOUT MOBILE */}
+
+            {user ? (
+              <>
+                <Divider />
+
+                <ListItem
+                  button
+                  className="mobile-link"
+                  onClick={() => {
+                    closeDrawer();
+                    navigate("/Account");
+                  }}
+                >
+                  <PersonOutlinedIcon />
+                  <span>My Profile</span>
+                </ListItem>
+
+                <ListItem className="mobile-link" onClick={handleLogout}>
+                  <PersonOutlinedIcon />
+                  <span>Logout</span>
+                </ListItem>
+              </>
+            ) : (
+              <ListItem className="mobile-link" onClick={openLogin}>
+                <PersonOutlinedIcon />
+                <span>Login</span>
+              </ListItem>
+            )}
           </List>
 
           <Divider />
 
           {/* SHOP NOW SIDEBAR */}
+
           <div className="mobile-shop-section">
             <button
               className="mobile-shop-toggle"
@@ -652,6 +915,8 @@ function Header({ cartItems = [], wishlistItems = [], products = [] }) {
           </div>
         </Box>
       </Drawer>
+
+      {/* LOGIN DIALOG */}
 
       <Login open={loginOpen} onClose={() => setLoginOpen(false)} />
     </>

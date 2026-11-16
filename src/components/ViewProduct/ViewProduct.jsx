@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./ViewProduct.css";
 
 import PrdInquary from "../DetailsCard/PrdInquary";
@@ -12,6 +12,9 @@ import Snackbar from "@mui/material/Snackbar";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 
+// NOTIFICATION SERVICE
+import { createNotification } from "../../utils/notificationService";
+
 // =====================================
 // API CONFIGURATION
 // =====================================
@@ -23,7 +26,6 @@ const STOCK_API_URL =
   "https://plyexpert.com/shaheedApis/Backend-dashboard/api/stock.php";
 
 const IMAGE_BASE_URL = "http://localhost";
-
 // =====================================
 // IMAGE URL HELPER
 // =====================================
@@ -33,12 +35,44 @@ const getImageUrl = (image) => {
     return cardimg1;
   }
 
-  if (image.startsWith("http://") || image.startsWith("https://")) {
-    return image;
+  const cleanImage = image.trim();
+
+  if (
+    cleanImage.startsWith("http://") ||
+    cleanImage.startsWith("https://") ||
+    cleanImage.startsWith("data:image/")
+  ) {
+    return cleanImage;
   }
 
-  return `${IMAGE_BASE_URL}/${image.replace(/^\/+/, "")}`;
+  return `${IMAGE_BASE_URL}/${cleanImage.replace(/^\/+/, "")}`;
 };
+
+// =====================================
+// STOCK HELPER
+// =====================================
+
+const getStockValue = (product) => {
+  const value =
+    product?.quantity ??
+    product?.stock ??
+    product?.stock_quantity ??
+    product?.available_stock ??
+    0;
+
+  const stock = Number(value);
+
+  return Number.isFinite(stock) ? Math.max(0, stock) : 0;
+};
+
+// =====================================
+// SKU NORMALIZE
+// =====================================
+
+const normalizeSKU = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
 
 // =====================================
 // VIEW PRODUCT COMPONENT
@@ -46,6 +80,7 @@ const getImageUrl = (image) => {
 
 function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   // =====================================
   // STATES
@@ -61,6 +96,15 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [cartMessage, setCartMessage] = useState("");
+
+  // =====================================
+  // SNACKBAR HELPER
+  // =====================================
+
+  const showMessage = (message) => {
+    setCartMessage(message);
+    setSnackbarOpen(true);
+  };
 
   // =====================================
   // SEARCH DATA
@@ -97,7 +141,8 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
           signal: controller.signal,
         };
 
-        // Fetch both APIs independently
+        // FETCH BOTH APIS
+
         const [productResponse, stockResponse] = await Promise.all([
           fetch(API_URL, requestOptions),
           fetch(STOCK_API_URL, requestOptions),
@@ -107,9 +152,7 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
 
         console.log("Stock API Status:", stockResponse.status);
 
-        // =====================================
         // PRODUCT API VALIDATION
-        // =====================================
 
         if (!productResponse.ok) {
           throw new Error(`Product API failed: HTTP ${productResponse.status}`);
@@ -119,33 +162,84 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
 
         console.log("Product API Data:", productResult);
 
-        if (!productResult.success) {
+        if (!productResult.success || !Array.isArray(productResult.data)) {
           throw new Error(productResult.message || "Product fetch failed.");
+        }
+
+        // =====================================
+        // STOCK API DATA
+        // =====================================
+
+        let stockData = [];
+
+        if (stockResponse.ok) {
+          try {
+            const stockResult = await stockResponse.json();
+
+            console.log("Stock API Data:", stockResult);
+
+            if (stockResult.success && Array.isArray(stockResult.data)) {
+              stockData = stockResult.data;
+            }
+          } catch (stockError) {
+            console.warn("Stock API JSON Error:", stockError);
+          }
+        } else {
+          console.warn("Stock API unavailable. HTTP:", stockResponse.status);
         }
 
         // =====================================
         // PRODUCT DATA
         // =====================================
 
-        const productData = (productResult.data || [])
-          .filter((item) => String(item.status).toLowerCase() === "active")
+        const productData = productResult.data
+          .filter(
+            (item) => String(item.status || "").toLowerCase() === "active",
+          )
           .map((item) => {
             const images = Array.isArray(item.images) ? item.images : [];
+
+            const productSKU = normalizeSKU(item.sku);
+
+            // MATCH STOCK BY SKU
+
+            const matchingStock = productSKU
+              ? stockData.find(
+                  (stockItem) =>
+                    normalizeSKU(stockItem.product_code) === productSKU,
+                )
+              : null;
+
+            const availableStock = matchingStock
+              ? getStockValue(matchingStock)
+              : getStockValue(item);
 
             return {
               id: `product-${item.id}`,
               originalId: item.id,
-              name: item.name || "",
+
+              name: item.name || "Unnamed Product",
+
               sku: item.sku || "",
+
               category: item.category || "",
+
               price: Number(item.price) || 0,
-              stock: Math.max(0, Number(item.stock) || 0),
-              supplier: item.supplier || "",
+
+              stock: availableStock,
+
+              supplier: matchingStock?.supplier_name || item.supplier || "",
+
               description: item.description || "",
-              image: getImageUrl(images[0]),
-              images,
-              oldPrice: null,
+
+              image: images.length > 0 ? getImageUrl(images[0]) : cardimg1,
+
+              images: images.map(getImageUrl),
+
+              oldPrice: Number(item.oldPrice) || null,
+
               sizes: [],
+
               source: "product",
             };
           });
@@ -154,47 +248,59 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
         // STOCK DATA
         // =====================================
 
-        let stockData = [];
+        const formattedStock = stockData.map((item) => ({
+          id: `stock-${item.id}`,
 
-        if (stockResponse.ok) {
-          const stockResult = await stockResponse.json();
+          originalId: item.id,
 
-          console.log("Stock API Data:", stockResult);
+          name: item.product_name || "Unnamed Product",
 
-          if (stockResult.success) {
-            stockData = (stockResult.data || []).map((item) => ({
-              id: `stock-${item.id}`,
-              originalId: item.id,
-              name: item.product_name || "",
-              sku: item.product_code || "",
-              category: item.category_name || "",
-              price: Number(item.unit_price) || 0,
-              stock: Math.max(0, Number(item.quantity) || 0),
-              supplier: item.supplier_name || "",
-              description: "",
-              image: getImageUrl(item.image_path),
-              images: item.image_path ? [item.image_path] : [],
-              oldPrice: null,
-              sizes: [],
-              source: "stock",
-            }));
-          } else {
-            console.warn("Stock API Error:", stockResult.message);
-          }
-        } else {
-          console.warn("Stock API unavailable. HTTP:", stockResponse.status);
-        }
+          sku: item.product_code || "",
+
+          category: item.category_name || "",
+
+          price: Number(item.unit_price) || 0,
+
+          stock: getStockValue(item),
+
+          supplier: item.supplier_name || "",
+
+          description: "",
+
+          image: getImageUrl(item.image_path),
+
+          images: item.image_path ? [getImageUrl(item.image_path)] : [],
+
+          oldPrice: null,
+
+          sizes: [],
+
+          source: "stock",
+        }));
 
         // =====================================
         // MERGE PRODUCT AND STOCK
         // =====================================
 
-        const allProducts = [...productData, ...stockData];
+        const allProducts = [...productData, ...formattedStock];
 
-        console.log("All Products:", allProducts);
+        console.log("FINAL PRODUCTS:", allProducts);
 
         if (!controller.signal.aborted) {
           setProducts(allProducts);
+
+          setQuantities((previous) => {
+            const updated = {};
+
+            allProducts.forEach((product) => {
+              const current = previous[product.id] || 1;
+
+              updated[product.id] =
+                product.stock > 0 ? Math.min(current, product.stock) : 1;
+            });
+
+            return updated;
+          });
         }
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -243,6 +349,7 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
 
     setQuantities((previous) => {
       const current = previous[id] || 1;
+
       const updated = current + amount;
 
       return {
@@ -253,29 +360,28 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
   };
 
   // =====================================
-  // ADD TO CART
+  // ADD TO CART + NOTIFICATION
   // =====================================
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = async (product) => {
     const quantity = quantities[product.id] || 1;
 
     if (product.stock <= 0) {
-      setCartMessage("Product is out of stock!");
-      setSnackbarOpen(true);
+      showMessage("Product is out of stock!");
       return;
     }
 
     if (quantity > product.stock) {
-      setCartMessage("Requested quantity is not available!");
-      setSnackbarOpen(true);
+      showMessage("Requested quantity is not available!");
       return;
     }
 
     if (typeof onAddToCart !== "function") {
-      setCartMessage("Cart functionality is not connected.");
-      setSnackbarOpen(true);
+      showMessage("Cart functionality is not connected.");
       return;
     }
+
+    // ADD PRODUCT TO CART
 
     onAddToCart({
       ...product,
@@ -283,24 +389,50 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
       selectedSize: product.sizes?.[0] || "",
     });
 
-    setCartMessage(`${product.name} added to cart successfully!`);
+    // SUCCESS MESSAGE
 
-    setSnackbarOpen(true);
+    showMessage(`${product.name} added to cart successfully!`);
+
+    // DATABASE NOTIFICATION
+
+    try {
+      await createNotification({
+        title: "Product Added to Cart",
+
+        message: `${product.name} (${quantity} quantity) added to your cart successfully.`,
+
+        type: "cart",
+      });
+    } catch (notificationError) {
+      console.error("Cart Notification Error:", notificationError);
+    }
   };
 
   // =====================================
-  // WISHLIST
+  // WISHLIST + NOTIFICATION
   // =====================================
 
-  const toggleFavorite = (product) => {
-    if (typeof onWishlistChange !== "function") {
-      setCartMessage("Wishlist functionality is not connected.");
+  const toggleFavorite = async (product) => {
+    // CHECK LOGIN
 
-      setSnackbarOpen(true);
+    const loggedInUser = localStorage.getItem("loggedInUser");
+
+    if (!loggedInUser) {
+      showMessage("Please login first to use your wishlist.");
+
+      navigate("/Login");
+
+      return;
+    }
+
+    if (typeof onWishlistChange !== "function") {
+      showMessage("Wishlist functionality is not connected.");
       return;
     }
 
     const wishlistId = product.originalId;
+
+    // CHECK EXISTING WISHLIST
 
     const alreadyFavorite = wishlistItems.some(
       (item) => String(item.id) === String(wishlistId),
@@ -308,11 +440,15 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
 
     let updatedWishlist;
 
+    // REMOVE PRODUCT
+
     if (alreadyFavorite) {
       updatedWishlist = wishlistItems.filter(
         (item) => String(item.id) !== String(wishlistId),
       );
     } else {
+      // ADD PRODUCT
+
       updatedWishlist = [
         ...wishlistItems,
         {
@@ -323,19 +459,39 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
       ];
     }
 
+    // UPDATE WISHLIST
+
     onWishlistChange(updatedWishlist);
 
     localStorage.setItem("wishlistItems", JSON.stringify(updatedWishlist));
 
     window.dispatchEvent(new Event("wishlistUpdated"));
 
-    setCartMessage(
+    // DATABASE NOTIFICATION
+
+    try {
+      await createNotification({
+        title: alreadyFavorite
+          ? "Product Removed from Wishlist"
+          : "Product Added to Wishlist",
+
+        message: alreadyFavorite
+          ? `${product.name} has been removed from your wishlist.`
+          : `${product.name} has been added to your wishlist.`,
+
+        type: "wishlist",
+      });
+    } catch (notificationError) {
+      console.error("Wishlist Notification Error:", notificationError);
+    }
+
+    // SUCCESS MESSAGE
+
+    showMessage(
       alreadyFavorite
         ? `${product.name} removed from wishlist!`
         : `${product.name} added to wishlist!`,
     );
-
-    setSnackbarOpen(true);
   };
 
   // =====================================
@@ -423,6 +579,7 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
                     <img
                       src={product.image || cardimg1}
                       alt={product.name}
+                      loading="lazy"
                       onError={(event) => {
                         event.currentTarget.onerror = null;
                         event.currentTarget.src = cardimg1;
@@ -433,6 +590,8 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
                     <span className="view-product-source">
                       {product.source === "stock" ? "Stock" : "Product"}
                     </span>
+
+                    {/* DISCOUNT */}
 
                     {product.oldPrice > product.price && (
                       <span className="view-product-offer">
@@ -480,11 +639,17 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
 
                     {/* STOCK */}
 
-                    <p className="view-product-stock">
+                    {/* <p
+                      className="view-product-stock"
+                      style={{
+                        color: product.stock > 0 ? "#16834a" : "#dc2626",
+                        fontWeight: 600,
+                      }}
+                    >
                       {product.stock > 0
                         ? `Available Stock: ${product.stock}`
                         : "Out of Stock"}
-                    </p>
+                    </p> */}
 
                     {/* PRICE AND QUANTITY */}
 
@@ -564,6 +729,7 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
         autoHideDuration={3000}
         onClose={(event, reason) => {
           if (reason === "clickaway") return;
+
           setSnackbarOpen(false);
         }}
         anchorOrigin={{
@@ -575,6 +741,8 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
             sx: {
               backgroundColor: "#176b45",
               color: "white",
+              borderRadius: "10px",
+              fontWeight: 500,
             },
           },
         }}
