@@ -4,7 +4,7 @@ import "./Payment.css";
 import { createNotification } from "../../utils/notificationService";
 
 const PAYMENT_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/payment.php";
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/payment.php";
 
 // =====================================
 // GET LOGGED IN USER ID

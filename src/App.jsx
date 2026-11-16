@@ -32,13 +32,13 @@ import Account from "./components/Wishlist/Account/Account";
 // =====================================
 
 const CART_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/cart.php";
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/cart.php";
 
 const WISHLIST_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/wishlist.php";
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/wishlist.php";
 
 const ORDERS_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/order_history.php";
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/order_history.php";
 
 // =====================================
 // GET LOGGED-IN USER ID

@@ -12,7 +12,7 @@ import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
 const ACCOUNT_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/signup.php";
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/signup.php";
 
 function Account() {
   const navigate = useNavigate();

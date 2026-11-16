@@ -5,7 +5,7 @@ import CardEmp from "../CardEmp";
 import { createNotification } from "../../../utils/notificationService";
 
 const ORDER_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/place_order.php";
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/place_order.php";
 
 // =====================================
 // GET LOGGED IN USER ID
