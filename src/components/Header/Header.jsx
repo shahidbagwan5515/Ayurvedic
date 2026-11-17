@@ -43,7 +43,7 @@ import Companylog2 from "../../assets/navLog.png";
 // =====================================
 
 const NOTIFICATION_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend/api/notifications.php";
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/notifications.php";
 
 // =====================================
 // GET LOGGED-IN USER
