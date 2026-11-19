@@ -13,7 +13,7 @@ import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
 import { getNotificationUserId } from "../../utils/notificationService";
 
 const API_URL =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/notifications.php";
+  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/notifications.php";
 
 // Get actual logged-in user
 const getLoggedInUserId = () => {

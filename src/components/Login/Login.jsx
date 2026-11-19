@@ -9,7 +9,7 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import "./Login.css";
 
 const API_URL =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/login.php";
+  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/login.php";
 
 function Login({ open, onClose }) {
   const navigate = useNavigate();

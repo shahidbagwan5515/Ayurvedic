@@ -12,7 +12,7 @@ function Signup() {
   const navigate = useNavigate();
 
   const API_URL =
-    "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/signup.php";
+    "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/signup.php";
 
   const [form, setForm] = useState({
     name: "",

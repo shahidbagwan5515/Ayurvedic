@@ -32,13 +32,13 @@ import { createNotification } from "./utils/notificationService";
 // =====================================
 
 const CART_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/cart.php";
+  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/cart.php";
 
 const WISHLIST_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/wishlist.php";
+  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/wishlist.php";
 
 const ORDERS_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/order_history.php";
+  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/order_history.php";
 
 // =====================================
 // GET LOGGED-IN USER ID

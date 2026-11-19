@@ -25,10 +25,10 @@ import { createNotification } from "../../utils/notificationService";
 // =====================================
 
 const API_URL =
-  "https://plyexpert.com/shaheedApis/Backend-dashboard/api/product.php";
+  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend/api/product.php";
 
 const STOCK_API_URL =
-  "https://plyexpert.com/shaheedApis/Backend-dashboard/api/stock.php";
+  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend/api/stock.php";
 
 const IMAGE_BASE_URL = "http://localhost";
 

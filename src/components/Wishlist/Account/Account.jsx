@@ -16,7 +16,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 // =====================================
 
 const ACCOUNT_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/signup.php";
+  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/signup.php";
 
 // =====================================
 // GET STORED USER
