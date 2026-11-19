@@ -8,7 +8,8 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
 import "./Login.css";
 
-const API_URL = "https://plyexpert.com/shaheedApis/Backend-web/api/login.php";
+const API_URL =
+  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/login.php";
 
 function Login({ open, onClose }) {
   const navigate = useNavigate();
@@ -22,10 +23,7 @@ function Login({ open, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // =====================================
   // INPUT CHANGE
-  // =====================================
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -37,13 +35,9 @@ function Login({ open, onClose }) {
     setError("");
   };
 
-  // =====================================
   // LOGIN SUBMIT
-  // =====================================
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError("");
 
     const email = form.email.trim().toLowerCase();
@@ -75,52 +69,36 @@ function Login({ open, onClose }) {
         throw new Error(data.message || "Email or password is incorrect.");
       }
 
-      // =====================================
-      // GET CUSTOMER DATA
-      // =====================================
+      // GET CUSTOMER DETAILS
+      const customer = data.data;
 
-      const loggedInUser = data.data;
-
-      if (!loggedInUser || typeof loggedInUser !== "object") {
+      if (!customer || typeof customer !== "object") {
         throw new Error("Invalid customer information received.");
       }
 
-      const loggedInUserId = Number(
-        loggedInUser.id || loggedInUser.user_id || loggedInUser.userId || 0,
+      const customerId = Number(
+        customer.id || customer.user_id || customer.userId || 0,
       );
 
-      if (!Number.isSafeInteger(loggedInUserId) || loggedInUserId <= 0) {
+      if (!Number.isSafeInteger(customerId) || customerId <= 0) {
         throw new Error("Login response does not contain a valid customer ID.");
       }
 
-      // =====================================
-      // CLEAR PREVIOUS CUSTOMER DATA
-      // =====================================
+      // SAVE CURRENT LOGGED-IN CUSTOMER
+      const currentUser = {
+        ...customer,
+        id: customerId,
+      };
 
-      localStorage.removeItem("loggedInUser");
-      localStorage.removeItem("user_id");
-      localStorage.removeItem("user");
+      localStorage.setItem("user", JSON.stringify(currentUser));
+      localStorage.setItem("loggedInUser", JSON.stringify(currentUser));
+      localStorage.setItem("user_id", String(customerId));
 
-      // =====================================
-      // SAVE CURRENT CUSTOMER DATA
-      // =====================================
-
-      localStorage.setItem("loggedInUser", JSON.stringify(loggedInUser));
-
-      localStorage.setItem("user_id", String(loggedInUserId));
-
-      // =====================================
-      // NOTIFY OTHER COMPONENTS
-      // =====================================
-
+      // UPDATE APP AND OTHER COMPONENTS
       window.dispatchEvent(new Event("authChanged"));
-
       window.dispatchEvent(new Event("notificationUpdated"));
 
-      // =====================================
       // RESET FORM
-      // =====================================
-
       setForm({
         email: "",
         password: "",
@@ -129,29 +107,22 @@ function Login({ open, onClose }) {
       setShowPassword(false);
       setError("");
 
-      // =====================================
-      // SUCCESS
-      // =====================================
-
-      alert("Login successful! Welcome " + (loggedInUser.name || "Customer"));
-
+      // CLOSE DRAWER
       if (onClose) {
         onClose();
       }
 
+      alert("Login successful! Welcome " + (currentUser.name || "Customer"));
+
+      // GO TO HOME
       navigate("/", { replace: true });
     } catch (err) {
       console.error("Login Error:", err);
-
       setError(err.message || "Server connection failed.");
     } finally {
       setLoading(false);
     }
   };
-
-  // =====================================
-  // RETURN UI
-  // =====================================
 
   return (
     <Drawer
@@ -165,7 +136,6 @@ function Login({ open, onClose }) {
     >
       <div className="login-container">
         {/* CLOSE BUTTON */}
-
         <button
           type="button"
           className="login-close-btn"
@@ -176,7 +146,6 @@ function Login({ open, onClose }) {
         </button>
 
         {/* LOGO */}
-
         <div className="login-logo">
           <div className="logo-circle">✿</div>
 
@@ -189,10 +158,8 @@ function Login({ open, onClose }) {
         <h2>Welcome to Login</h2>
 
         {/* LOGIN FORM */}
-
         <form className="login-form" onSubmit={handleSubmit}>
           {/* EMAIL */}
-
           <label>Email</label>
 
           <input
@@ -206,7 +173,6 @@ function Login({ open, onClose }) {
           />
 
           {/* PASSWORD */}
-
           <label>Password</label>
 
           <div className="password-box">
@@ -234,13 +200,11 @@ function Login({ open, onClose }) {
           </div>
 
           {/* FORGOT PASSWORD */}
-
           <div className="forgot-password">
             <button type="button">Forgot Password</button>
           </div>
 
           {/* ERROR */}
-
           {error && (
             <p className="login-error" role="alert">
               {error}
@@ -248,20 +212,17 @@ function Login({ open, onClose }) {
           )}
 
           {/* LOGIN BUTTON */}
-
           <button type="submit" className="login-btn" disabled={loading}>
             {loading ? "Logging in..." : "Login"}
           </button>
 
           {/* OTP BUTTON */}
-
           <button type="button" className="otp-btn" disabled>
             Login with OTP
           </button>
         </form>
 
         {/* SIGNUP LINK */}
-
         <div className="Sign-up">
           <p>
             Don't have an account? <Link to="/Signup">Sign up</Link>

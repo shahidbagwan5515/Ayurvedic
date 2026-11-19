@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Wishlist.css";
 
 import Snackbar from "@mui/material/Snackbar";
@@ -31,6 +31,7 @@ function Wishlist({
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
 
+  const navigate = useNavigate();
   // Prevent rapid duplicate clicks on the same product.
   const processingProducts = useRef(new Set());
 
@@ -79,6 +80,9 @@ function Wishlist({
   // ==========================================
   // MOVE PRODUCT TO CART
   // ==========================================
+  // ==========================================
+  // MOVE PRODUCT TO CART & REDIRECT TO CART
+  // ==========================================
   const moveToCart = async (product) => {
     const productId = String(product.id);
 
@@ -97,23 +101,22 @@ function Wishlist({
     processingProducts.current.add(productId);
 
     try {
-      // App.jsx handles cart API saving and creates the cart notification.
-      // Await it so the wishlist item is removed only after cart succeeds.
+      // Add product to cart
       await onAddToCart({
         ...product,
         quantity: 1,
         selectedSize: product.sizes?.[0] || "",
       });
 
+      // Remove product from wishlist
       if (typeof onWishlistChange === "function") {
         onWishlistChange((previous) =>
           previous.filter((item) => String(item.id) !== productId),
         );
       }
 
-      // Do not call createNotification here:
-      // App.jsx addToCart() already sends the cart notification.
-      showMessage(`${product.name} moved to cart successfully!`);
+      // Redirect to Cart Page
+      navigate("/Mycard");
     } catch (error) {
       console.error("Move to cart error:", error);
       showMessage("Unable to move this product to cart. Please try again.");

@@ -26,7 +26,7 @@ const getLoggedInUserId = () => {
   }
 };
 
-function Payment({ onPlaceOrder }) {
+function Payment({ onPlaceOrder, onOrderSuccess }) {
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [isPaying, setIsPaying] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -172,6 +172,11 @@ function Payment({ onPlaceOrder }) {
 
         setSuccessOrder(confirmedOrder);
 
+        // Clear cart after successful order confirmation
+        if (typeof onOrderSuccess === "function") {
+          await onOrderSuccess(result.order_id);
+        }
+
         await sendNotification(
           "Order Confirmed Successfully",
           `Your order ${confirmedOrder.orderNumber} has been confirmed with Cash on Delivery. Order total: ${formatPrice(grandTotal)}.`,
@@ -181,7 +186,6 @@ function Payment({ onPlaceOrder }) {
         setShowSuccess(true);
         return;
       }
-
       // =====================================
       // ONLINE PAYMENT
       // =====================================

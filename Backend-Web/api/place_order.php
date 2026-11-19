@@ -28,6 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 require_once __DIR__ . "/../config/db.php";
 
+
 // =====================================
 // RESPONSE
 // =====================================
@@ -36,13 +37,17 @@ function sendResponse($success, $message, $extra = [], $status = 200)
 {
   http_response_code($status);
 
-  echo json_encode(array_merge([
-    "success" => $success,
-    "message" => $message
-  ], $extra));
+  echo json_encode(
+    array_merge([
+      "success" => $success,
+      "message" => $message
+    ], $extra),
+    JSON_UNESCAPED_UNICODE
+  );
 
   exit;
 }
+
 
 // =====================================
 // METHOD CHECK
@@ -55,6 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 if (!isset($conn) || !($conn instanceof mysqli)) {
   sendResponse(false, "Database connection failed", [], 500);
 }
+
 
 // =====================================
 // REQUEST DATA
@@ -78,6 +84,7 @@ $coupon_code = strtoupper(
 if ($user_id <= 0) {
   sendResponse(false, "Please login first", [], 400);
 }
+
 
 // =====================================
 // ADDRESS VALIDATION
@@ -126,6 +133,7 @@ if (
   );
 }
 
+
 // =====================================
 // CREATE ORDER TRANSACTION
 // =====================================
@@ -135,14 +143,22 @@ $transactionStarted = false;
 try {
 
   $conn->begin_transaction();
+
   $transactionStarted = true;
 
-  // =================================
+
+  // =====================================
   // GET CUSTOMER CART
-  // =================================
+  // =====================================
 
   $stmt = $conn->prepare(
-    "SELECT id, product_id, name, image, price, quantity
+    "SELECT
+            id,
+            product_id,
+            name,
+            image,
+            price,
+            quantity
          FROM cart_items
          WHERE user_id = ?
          ORDER BY id ASC
@@ -150,10 +166,13 @@ try {
   );
 
   if (!$stmt) {
-    throw new Exception("Cart query preparation failed");
+    throw new Exception(
+      "Cart query preparation failed: " . $conn->error
+    );
   }
 
   $stmt->bind_param("i", $user_id);
+
   $stmt->execute();
 
   $result = $stmt->get_result();
@@ -192,9 +211,262 @@ try {
 
   $subtotal = round($subtotal, 2);
 
-  // =================================
+
+  // =====================================
+  // LIVE STOCK VALIDATION + UPDATE
+  // BOTH TABLES:
+  // products.stock
+  // stocks.quantity
+  // =====================================
+
+  $stockUpdates = [];
+
+  foreach ($cart as $item) {
+
+    $productId = (int)$item["product_id"];
+    $orderedQty = (int)$item["quantity"];
+
+
+    // ---------------------------------
+    // GET CUSTOMER PRODUCT
+    // ---------------------------------
+
+    $productStmt = $conn->prepare(
+      "SELECT
+                id,
+                name,
+                sku,
+                stock
+             FROM products
+             WHERE id = ?
+             LIMIT 1
+             FOR UPDATE"
+    );
+
+    if (!$productStmt) {
+      throw new Exception(
+        "Product query failed: " . $conn->error
+      );
+    }
+
+    $productStmt->bind_param("i", $productId);
+
+    $productStmt->execute();
+
+    $product = $productStmt
+      ->get_result()
+      ->fetch_assoc();
+
+    $productStmt->close();
+
+    if (!$product) {
+      throw new Exception(
+        "Product not found for cart product ID: " . $productId
+      );
+    }
+
+
+    $productName = trim((string)$product["name"]);
+    $sku = trim((string)($product["sku"] ?? ""));
+
+    $productAvailable = (int)$product["stock"];
+
+
+    // ---------------------------------
+    // FIND ADMIN STOCK
+    // FIRST MATCH SKU
+    // THEN MATCH PRODUCT NAME
+    // ---------------------------------
+
+    $stockStmt = $conn->prepare(
+      "SELECT
+                id,
+                product_name,
+                product_code,
+                quantity
+             FROM stocks
+             WHERE
+                (
+                    ? != ''
+                    AND TRIM(product_code) = ?
+                )
+                OR LOWER(TRIM(product_name)) = LOWER(?)
+             ORDER BY
+                CASE
+                    WHEN ? != ''
+                    AND TRIM(product_code) = ?
+                    THEN 0
+                    ELSE 1
+                END
+             LIMIT 1
+             FOR UPDATE"
+    );
+
+    if (!$stockStmt) {
+      throw new Exception(
+        "Stock query failed: " . $conn->error
+      );
+    }
+
+    $stockStmt->bind_param(
+      "sssss",
+      $sku,
+      $sku,
+      $productName,
+      $sku,
+      $sku
+    );
+
+    $stockStmt->execute();
+
+    $stock = $stockStmt
+      ->get_result()
+      ->fetch_assoc();
+
+    $stockStmt->close();
+
+
+    // ---------------------------------
+    // STOCK NOT FOUND
+    // ---------------------------------
+
+    if (!$stock) {
+      throw new Exception(
+        "Stock record not found for " .
+          $productName .
+          ". SKU: " .
+          ($sku ?: "Not Available")
+      );
+    }
+
+
+    // ---------------------------------
+    // CHECK AVAILABLE STOCK
+    // ---------------------------------
+
+    $stockId = (int)$stock["id"];
+
+    $stockAvailable = (int)$stock["quantity"];
+
+    if (
+      $productAvailable < $orderedQty ||
+      $stockAvailable < $orderedQty
+    ) {
+
+      $available = min(
+        $productAvailable,
+        $stockAvailable
+      );
+
+      throw new Exception(
+        "Insufficient stock for " .
+          $productName .
+          ". Available quantity: " .
+          $available
+      );
+    }
+
+
+    // ---------------------------------
+    // UPDATE PRODUCTS TABLE
+    // ---------------------------------
+
+    $updateProduct = $conn->prepare(
+      "UPDATE products
+             SET stock = stock - ?
+             WHERE id = ?
+             AND stock >= ?"
+    );
+
+    if (!$updateProduct) {
+      throw new Exception(
+        "Product stock update failed: " . $conn->error
+      );
+    }
+
+    $updateProduct->bind_param(
+      "iii",
+      $orderedQty,
+      $productId,
+      $orderedQty
+    );
+
+    if (!$updateProduct->execute()) {
+      throw new Exception(
+        "Product stock update error: " . $updateProduct->error
+      );
+    }
+
+    if ($updateProduct->affected_rows !== 1) {
+      $updateProduct->close();
+
+      throw new Exception(
+        "Unable to decrease product stock for " . $productName
+      );
+    }
+
+    $updateProduct->close();
+
+
+    // ---------------------------------
+    // UPDATE ADMIN STOCK TABLE
+    // ---------------------------------
+
+    $updateStock = $conn->prepare(
+      "UPDATE stocks
+             SET quantity = quantity - ?
+             WHERE id = ?
+             AND quantity >= ?"
+    );
+
+    if (!$updateStock) {
+      throw new Exception(
+        "Admin stock update failed: " . $conn->error
+      );
+    }
+
+    $updateStock->bind_param(
+      "iii",
+      $orderedQty,
+      $stockId,
+      $orderedQty
+    );
+
+    if (!$updateStock->execute()) {
+      throw new Exception(
+        "Admin stock update error: " . $updateStock->error
+      );
+    }
+
+    if ($updateStock->affected_rows !== 1) {
+      $updateStock->close();
+
+      throw new Exception(
+        "Unable to decrease admin stock for " . $productName
+      );
+    }
+
+    $updateStock->close();
+
+
+    // ---------------------------------
+    // SAVE STOCK UPDATE DETAILS
+    // ---------------------------------
+
+    $stockUpdates[] = [
+      "product_id" => $productId,
+      "product_name" => $productName,
+      "stock_id" => $stockId,
+      "ordered_quantity" => $orderedQty,
+      "remaining_product_stock" => $productAvailable - $orderedQty,
+      "remaining_admin_stock" => $stockAvailable - $orderedQty
+    ];
+  }
+
+
+  // =====================================
   // CALCULATE DISCOUNT AND GST
-  // =================================
+  // =====================================
 
   $discount = 0;
 
@@ -218,18 +490,28 @@ try {
     2
   );
 
-  // =================================
-  // CREATE ORDER IN orders_history
-  // =================================
 
-  $order_number = "AYU-" . date("Ymd") . "-" .
+  // =====================================
+  // CREATE ORDER NUMBER
+  // =====================================
+
+  $order_number = "AYU-" .
+    date("Ymd") .
+    "-" .
     strtoupper(bin2hex(random_bytes(4)));
 
   $payment_method = "Pending";
   $payment_status = "Pending";
   $order_status = "Pending";
 
-  $coupon_value = $coupon_code !== "" ? $coupon_code : null;
+  $coupon_value = $coupon_code !== ""
+    ? $coupon_code
+    : null;
+
+
+  // =====================================
+  // INSERT ORDER HISTORY
+  // =====================================
 
   $stmt = $conn->prepare(
     "INSERT INTO orders_history (
@@ -265,7 +547,9 @@ try {
   );
 
   if (!$stmt) {
-    throw new Exception("Order query preparation failed");
+    throw new Exception(
+      "Order query preparation failed: " . $conn->error
+    );
   }
 
   $stmt->bind_param(
@@ -296,19 +580,19 @@ try {
   );
 
   if (!$stmt->execute()) {
-    throw new Exception("Order insert failed: " . $stmt->error);
+    throw new Exception(
+      "Order insert failed: " . $stmt->error
+    );
   }
 
   $order_id = (int)$conn->insert_id;
 
   $stmt->close();
 
-  // =================================
-  // SAVE PRODUCTS IN order_items
-  // Matches your phpMyAdmin columns:
-  // order_id, product_id, product_name,
-  // product_image, price, quantity, total
-  // =================================
+
+  // =====================================
+  // INSERT ORDER ITEMS
+  // =====================================
 
   $itemStmt = $conn->prepare(
     "INSERT INTO order_items (
@@ -357,16 +641,19 @@ try {
 
   $itemStmt->close();
 
-  // =================================
+
+  // =====================================
   // CLEAR ONLY THIS USER'S CART
-  // =================================
+  // =====================================
 
   $deleteStmt = $conn->prepare(
     "DELETE FROM cart_items WHERE user_id = ?"
   );
 
   if (!$deleteStmt) {
-    throw new Exception("Cart delete preparation failed");
+    throw new Exception(
+      "Cart delete preparation failed: " . $conn->error
+    );
   }
 
   $deleteStmt->bind_param("i", $user_id);
@@ -379,46 +666,79 @@ try {
 
   $deleteStmt->close();
 
-  // =================================
-  // COMMIT
-  // =================================
+
+  // =====================================
+  // COMMIT TRANSACTION
+  // =====================================
 
   $conn->commit();
+
   $transactionStarted = false;
+
+
+  // =====================================
+  // SUCCESS RESPONSE
+  // =====================================
 
   sendResponse(
     true,
-    "Order created successfully",
+    "Order created successfully and stock updated",
     [
       "order_id" => $order_id,
       "order_number" => $order_number,
+
       "payment_method" => $payment_method,
       "payment_status" => $payment_status,
       "order_status" => $order_status,
+
       "subtotal" => $subtotal,
       "discount" => $discount,
       "delivery_amount" => $deliveryAmount,
       "gst" => $gst,
       "grand_total" => $grandTotal,
+
       "cart_cleared" => true,
-      "deleted_cart_items" => $deletedCartItems
+      "deleted_cart_items" => $deletedCartItems,
+
+      "stock_updated" => true,
+      "stock_updates" => $stockUpdates
     ]
   );
 } catch (Throwable $e) {
+
+
+  // =====================================
+  // ROLLBACK
+  // =====================================
 
   if ($transactionStarted) {
     $conn->rollback();
   }
 
-  error_log("Place Order Error: " . $e->getMessage());
+  error_log(
+    "Place Order Error: " . $e->getMessage()
+  );
 
   $message = $e->getMessage();
 
-  if (
-    $message !== "Your cart is empty" &&
-    $message !== "Invalid product in cart" &&
-    $message !== "Invalid discount coupon"
-  ) {
+  $knownErrors = [
+    "Your cart is empty",
+    "Invalid product in cart",
+    "Invalid discount coupon"
+  ];
+
+  $isKnownError = in_array(
+    $message,
+    $knownErrors,
+    true
+  );
+
+  $isStockError =
+    strpos($message, "Insufficient stock for") === 0 ||
+    strpos($message, "Stock record not found for") === 0 ||
+    strpos($message, "Product not found") === 0;
+
+  if (!$isKnownError && !$isStockError) {
     $message = "Unable to place order. Please try again.";
   }
 
@@ -431,4 +751,5 @@ try {
     500
   );
 }
+
 ?>

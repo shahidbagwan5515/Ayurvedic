@@ -11,6 +11,13 @@ import CloseIcon from "@mui/icons-material/Close";
 import FavoriteOutlinedIcon from "@mui/icons-material/FavoriteOutlined";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCartOutlined";
 
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import Button from "@mui/material/Button";
+
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+
 import { createNotification } from "../../utils/notificationService";
 
 // =====================================
@@ -23,8 +30,6 @@ const API_URL =
 const STOCK_API_URL =
   "https://plyexpert.com/shaheedApis/Backend-dashboard/api/stock.php";
 
-// IMPORTANT:
-// Production image URL ke liye apna actual backend domain use karein.
 const IMAGE_BASE_URL = "http://localhost";
 
 // =====================================
@@ -104,6 +109,14 @@ function ProductCard({
 
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // WISHLIST POPUP STATE
+  const [wishlistDialog, setWishlistDialog] = useState({
+    open: false,
+    type: "success",
+    product: null,
+    message: "",
+  });
+
   const scrollRef = useRef(null);
 
   const navigate = useNavigate();
@@ -116,6 +129,26 @@ function ProductCard({
     setCartMessage(message);
     setSnackbarOpen(true);
   }, []);
+
+  // =====================================
+  // WISHLIST POPUP HELPER
+  // =====================================
+
+  const showWishlistPopup = (type, product, message) => {
+    setWishlistDialog({
+      open: true,
+      type,
+      product,
+      message,
+    });
+  };
+
+  const closeWishlistPopup = () => {
+    setWishlistDialog((previous) => ({
+      ...previous,
+      open: false,
+    }));
+  };
 
   // =====================================
   // FETCH PRODUCT + STOCK API
@@ -138,8 +171,6 @@ function ProductCard({
           signal: controller.signal,
         };
 
-        // FETCH BOTH APIS
-
         const [productResponse, stockResponse] = await Promise.all([
           fetch(API_URL, requestOptions),
           fetch(STOCK_API_URL, requestOptions),
@@ -155,9 +186,7 @@ function ProductCard({
           throw new Error(productResult.message || "Unable to fetch products.");
         }
 
-        // =====================================
         // STOCK API DATA
-        // =====================================
 
         let stockData = [];
 
@@ -179,21 +208,15 @@ function ProductCard({
 
         console.log("PRODUCT API RESPONSE:", productResult);
 
-        // =====================================
         // FORMAT PRODUCTS
-        // =====================================
 
         const formattedProducts = productResult.data
-
           .filter(
             (product) =>
               String(product.status || "").toLowerCase() === "active",
           )
-
           .map((product) => {
             const images = Array.isArray(product.images) ? product.images : [];
-
-            // MATCH SKU WITH PRODUCT CODE
 
             const productSKU = normalizeSKU(product.sku);
 
@@ -203,8 +226,6 @@ function ProductCard({
                     normalizeSKU(stockItem.product_code) === productSKU,
                 )
               : null;
-
-            // USE STOCK API QUANTITY
 
             const availableStock = matchingStock
               ? getStockValue(matchingStock)
@@ -268,7 +289,6 @@ function ProductCard({
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Product Fetch Error:", err);
-
           setError(err.message || "Failed to load products.");
         }
       } finally {
@@ -430,13 +450,16 @@ function ProductCard({
   // =====================================
 
   const toggleWishlist = async (product) => {
-    // CHECK LOGIN
+    // LOGIN CHECK
 
     const loggedInUser = localStorage.getItem("loggedInUser");
 
     if (!loggedInUser) {
-      alert("Please login first to use your wishlist.");
-      navigate("/Login");
+      showWishlistPopup(
+        "login",
+        product,
+        "Please login first to add products to your wishlist.",
+      );
       return;
     }
 
@@ -451,13 +474,21 @@ function ProductCard({
       (item) => String(item.id) === String(product.id),
     );
 
-    // UPDATE WISHLIST
+    // REMOVE FROM WISHLIST
 
     if (exists) {
       onWishlistChange((previous) =>
         previous.filter((item) => String(item.id) !== String(product.id)),
       );
+
+      showWishlistPopup(
+        "removed",
+        product,
+        `${product.name} has been removed from your wishlist.`,
+      );
     } else {
+      // ADD TO WISHLIST
+
       const wishlistProduct = {
         ...product,
         stock: Number(product.stock),
@@ -468,11 +499,15 @@ function ProductCard({
         ...previous.filter((item) => String(item.id) !== String(product.id)),
         wishlistProduct,
       ]);
+
+      showWishlistPopup(
+        "success",
+        product,
+        `${product.name} has been added to your wishlist successfully!`,
+      );
     }
 
-    // =====================================
     // CREATE NOTIFICATION
-    // =====================================
 
     try {
       await createNotification({
@@ -489,16 +524,6 @@ function ProductCard({
     } catch (notificationError) {
       console.error("Wishlist Notification Error:", notificationError);
     }
-
-    // =====================================
-    // SUCCESS MESSAGE
-    // =====================================
-
-    showMessage(
-      exists
-        ? `${product.name} removed from wishlist!`
-        : `${product.name} added to wishlist!`,
-    );
   };
 
   // =====================================
@@ -636,8 +661,6 @@ function ProductCard({
 
                 <p className="product-description">{product.description}</p>
 
-                {/* STOCK */}
-
                 {/* PRICE AND QUANTITY */}
 
                 <div className="product-footer">
@@ -700,7 +723,100 @@ function ProductCard({
         })}
       </section>
 
-      {/* SNACKBAR */}
+      {/* =====================================
+          WISHLIST POPUP
+      ===================================== */}
+
+      <Dialog
+        open={wishlistDialog.open}
+        onClose={closeWishlistPopup}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: "20px",
+            padding: "12px",
+            textAlign: "center",
+            overflow: "hidden",
+          },
+        }}
+      >
+        <DialogContent>
+          {/* <div className={`wishlist-popup-icon ${wishlistDialog.type}`}>
+            {wishlistDialog.type === "success" ? (
+              <CheckCircleIcon />
+            ) : (
+              <FavoriteIcon />
+            )}
+          </div> */}
+
+          <h2 className="wishlist-popup-title">
+            {wishlistDialog.type === "success"
+              ? "Added to Wishlist!"
+              : wishlistDialog.type === "removed"
+                ? "Removed from Wishlist"
+                : "Login Required"}
+          </h2>
+
+          {/* PRODUCT DETAILS */}
+
+          {wishlistDialog.product && (
+            <div className="wishlist-popup-product">
+              <img
+                src={wishlistDialog.product.image || cardimg1}
+                alt={wishlistDialog.product.name}
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = cardimg1;
+                }}
+              />
+
+              <h3>{wishlistDialog.product.name}</h3>
+
+              <span>
+                ₹{Number(wishlistDialog.product.price || 0).toFixed(2)}
+              </span>
+            </div>
+          )}
+
+          <p className="wishlist-popup-message">{wishlistDialog.message}</p>
+
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => {
+              const isLogin = wishlistDialog.type === "login";
+
+              closeWishlistPopup();
+
+              if (isLogin) {
+                navigate("/Login");
+              }
+            }}
+            sx={{
+              backgroundColor: "#176b45",
+              borderRadius: "10px",
+              padding: "12px",
+              fontWeight: 700,
+              textTransform: "none",
+              fontSize: "14px",
+              boxShadow: "none",
+              "&:hover": {
+                backgroundColor: "#0e5134",
+                boxShadow: "none",
+              },
+            }}
+          >
+            {wishlistDialog.type === "login"
+              ? "Login Now"
+              : "Continue Shopping"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* =====================================
+          CART SNACKBAR
+      ===================================== */}
 
       <Snackbar
         open={snackbarOpen}

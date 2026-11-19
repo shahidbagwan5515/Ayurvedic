@@ -7,12 +7,17 @@ import cardimg1 from "../../assets/banner-1.jpeg";
 
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCartOutlined";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 import Snackbar from "@mui/material/Snackbar";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 
-// NOTIFICATION SERVICE
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import Button from "@mui/material/Button";
+
 import { createNotification } from "../../utils/notificationService";
 
 // =====================================
@@ -26,6 +31,7 @@ const STOCK_API_URL =
   "https://plyexpert.com/shaheedApis/Backend-dashboard/api/stock.php";
 
 const IMAGE_BASE_URL = "http://localhost";
+
 // =====================================
 // IMAGE URL HELPER
 // =====================================
@@ -97,6 +103,15 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [cartMessage, setCartMessage] = useState("");
 
+  // WISHLIST POPUP STATE
+
+  const [wishlistDialog, setWishlistDialog] = useState({
+    open: false,
+    type: "success",
+    product: null,
+    message: "",
+  });
+
   // =====================================
   // SNACKBAR HELPER
   // =====================================
@@ -104,6 +119,26 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
   const showMessage = (message) => {
     setCartMessage(message);
     setSnackbarOpen(true);
+  };
+
+  // =====================================
+  // WISHLIST POPUP HELPER
+  // =====================================
+
+  const showWishlistPopup = (type, product, message) => {
+    setWishlistDialog({
+      open: true,
+      type,
+      product,
+      message,
+    });
+  };
+
+  const closeWishlistPopup = () => {
+    setWishlistDialog((previous) => ({
+      ...previous,
+      open: false,
+    }));
   };
 
   // =====================================
@@ -141,18 +176,10 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
           signal: controller.signal,
         };
 
-        // FETCH BOTH APIS
-
         const [productResponse, stockResponse] = await Promise.all([
           fetch(API_URL, requestOptions),
           fetch(STOCK_API_URL, requestOptions),
         ]);
-
-        console.log("Product API Status:", productResponse.status);
-
-        console.log("Stock API Status:", stockResponse.status);
-
-        // PRODUCT API VALIDATION
 
         if (!productResponse.ok) {
           throw new Error(`Product API failed: HTTP ${productResponse.status}`);
@@ -160,15 +187,11 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
 
         const productResult = await productResponse.json();
 
-        console.log("Product API Data:", productResult);
-
         if (!productResult.success || !Array.isArray(productResult.data)) {
           throw new Error(productResult.message || "Product fetch failed.");
         }
 
-        // =====================================
         // STOCK API DATA
-        // =====================================
 
         let stockData = [];
 
@@ -176,21 +199,15 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
           try {
             const stockResult = await stockResponse.json();
 
-            console.log("Stock API Data:", stockResult);
-
             if (stockResult.success && Array.isArray(stockResult.data)) {
               stockData = stockResult.data;
             }
           } catch (stockError) {
             console.warn("Stock API JSON Error:", stockError);
           }
-        } else {
-          console.warn("Stock API unavailable. HTTP:", stockResponse.status);
         }
 
-        // =====================================
         // PRODUCT DATA
-        // =====================================
 
         const productData = productResult.data
           .filter(
@@ -200,8 +217,6 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
             const images = Array.isArray(item.images) ? item.images : [];
 
             const productSKU = normalizeSKU(item.sku);
-
-            // MATCH STOCK BY SKU
 
             const matchingStock = productSKU
               ? stockData.find(
@@ -217,74 +232,43 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
             return {
               id: `product-${item.id}`,
               originalId: item.id,
-
               name: item.name || "Unnamed Product",
-
               sku: item.sku || "",
-
               category: item.category || "",
-
               price: Number(item.price) || 0,
-
               stock: availableStock,
-
               supplier: matchingStock?.supplier_name || item.supplier || "",
-
               description: item.description || "",
-
               image: images.length > 0 ? getImageUrl(images[0]) : cardimg1,
-
               images: images.map(getImageUrl),
-
               oldPrice: Number(item.oldPrice) || null,
-
               sizes: [],
-
               source: "product",
             };
           });
 
-        // =====================================
         // STOCK DATA
-        // =====================================
 
         const formattedStock = stockData.map((item) => ({
           id: `stock-${item.id}`,
-
           originalId: item.id,
-
           name: item.product_name || "Unnamed Product",
-
           sku: item.product_code || "",
-
           category: item.category_name || "",
-
           price: Number(item.unit_price) || 0,
-
           stock: getStockValue(item),
-
           supplier: item.supplier_name || "",
-
           description: "",
-
           image: getImageUrl(item.image_path),
-
           images: item.image_path ? [getImageUrl(item.image_path)] : [],
-
           oldPrice: null,
-
           sizes: [],
-
           source: "stock",
         }));
 
-        // =====================================
         // MERGE PRODUCT AND STOCK
-        // =====================================
 
         const allProducts = [...productData, ...formattedStock];
-
-        console.log("FINAL PRODUCTS:", allProducts);
 
         if (!controller.signal.aborted) {
           setProducts(allProducts);
@@ -305,7 +289,6 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Product/Stock API Error:", err);
-
           setError(err.message || "Unable to load products and stocks.");
         }
       } finally {
@@ -350,11 +333,9 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
     setQuantities((previous) => {
       const current = previous[id] || 1;
 
-      const updated = current + amount;
-
       return {
         ...previous,
-        [id]: Math.max(1, Math.min(product.stock, updated)),
+        [id]: Math.max(1, Math.min(product.stock, current + amount)),
       };
     });
   };
@@ -381,26 +362,18 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
       return;
     }
 
-    // ADD PRODUCT TO CART
-
     onAddToCart({
       ...product,
       quantity,
       selectedSize: product.sizes?.[0] || "",
     });
 
-    // SUCCESS MESSAGE
-
     showMessage(`${product.name} added to cart successfully!`);
-
-    // DATABASE NOTIFICATION
 
     try {
       await createNotification({
         title: "Product Added to Cart",
-
         message: `${product.name} (${quantity} quantity) added to your cart successfully.`,
-
         type: "cart",
       });
     } catch (notificationError) {
@@ -409,18 +382,20 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
   };
 
   // =====================================
-  // WISHLIST + NOTIFICATION
+  // WISHLIST + POPUP + NOTIFICATION
   // =====================================
 
   const toggleFavorite = async (product) => {
-    // CHECK LOGIN
-
     const loggedInUser = localStorage.getItem("loggedInUser");
 
-    if (!loggedInUser) {
-      showMessage("Please login first to use your wishlist.");
+    // LOGIN CHECK
 
-      navigate("/Login");
+    if (!loggedInUser) {
+      showWishlistPopup(
+        "login",
+        product,
+        "Please login first to add products to your wishlist.",
+      );
 
       return;
     }
@@ -446,17 +421,32 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
       updatedWishlist = wishlistItems.filter(
         (item) => String(item.id) !== String(wishlistId),
       );
+
+      showWishlistPopup(
+        "removed",
+        product,
+        `${product.name} has been removed from your wishlist.`,
+      );
     } else {
       // ADD PRODUCT
 
       updatedWishlist = [
-        ...wishlistItems,
+        ...wishlistItems.filter(
+          (item) => String(item.id) !== String(wishlistId),
+        ),
         {
           ...product,
           id: wishlistId,
+          stock: Number(product.stock),
           inStock: product.stock > 0,
         },
       ];
+
+      showWishlistPopup(
+        "success",
+        product,
+        `${product.name} has been added to your wishlist successfully!`,
+      );
     }
 
     // UPDATE WISHLIST
@@ -484,14 +474,6 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
     } catch (notificationError) {
       console.error("Wishlist Notification Error:", notificationError);
     }
-
-    // SUCCESS MESSAGE
-
-    showMessage(
-      alreadyFavorite
-        ? `${product.name} removed from wishlist!`
-        : `${product.name} added to wishlist!`,
-    );
   };
 
   // =====================================
@@ -616,11 +598,7 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
                       }
                       onClick={() => toggleFavorite(product)}
                     >
-                      <FavoriteBorderIcon
-                        sx={{
-                          color: isFavorite ? "red" : "inherit",
-                        }}
-                      />
+                      {isFavorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
                     </button>
                   </div>
 
@@ -636,20 +614,6 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
                     <p className="view-product-description">
                       {product.description || `Product code: ${product.sku}`}
                     </p>
-
-                    {/* STOCK */}
-
-                    {/* <p
-                      className="view-product-stock"
-                      style={{
-                        color: product.stock > 0 ? "#16834a" : "#dc2626",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {product.stock > 0
-                        ? `Available Stock: ${product.stock}`
-                        : "Out of Stock"}
-                    </p> */}
 
                     {/* PRICE AND QUANTITY */}
 
@@ -715,21 +679,121 @@ function ViewProduct({ onAddToCart, wishlistItems = [], onWishlistChange }) {
           ) : (
             <div className="no-products-found">
               <h3>No products found</h3>
-
               <p>Try searching with another product name or category.</p>
             </div>
           )}
         </div>
       </section>
 
-      {/* SNACKBAR */}
+      {/* =====================================
+          WISHLIST SUCCESS / REMOVE / LOGIN POPUP
+      ===================================== */}
+
+      <Dialog
+        open={wishlistDialog.open}
+        onClose={closeWishlistPopup}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: "20px",
+            padding: "12px",
+            textAlign: "center",
+            overflow: "hidden",
+          },
+        }}
+      >
+        <DialogContent>
+          {/* POPUP ICON */}
+          {/* 
+          <div className={`wishlist-popup-icon ${wishlistDialog.type}`}>
+            {wishlistDialog.type === "success" ? (
+              <CheckCircleIcon />
+            ) : (
+              <FavoriteIcon />
+            )}
+          </div> */}
+
+          {/* POPUP TITLE */}
+
+          <h2 className="wishlist-popup-title">
+            {wishlistDialog.type === "success"
+              ? "Added to Wishlist!"
+              : wishlistDialog.type === "removed"
+                ? "Removed from Wishlist"
+                : "Login Required"}
+          </h2>
+
+          {/* PRODUCT DETAILS */}
+
+          {wishlistDialog.product && (
+            <div className="wishlist-popup-product">
+              <img
+                src={wishlistDialog.product.image || cardimg1}
+                alt={wishlistDialog.product.name}
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = cardimg1;
+                }}
+              />
+
+              <h3>{wishlistDialog.product.name}</h3>
+
+              <span>
+                ₹{Number(wishlistDialog.product.price || 0).toFixed(2)}
+              </span>
+            </div>
+          )}
+
+          {/* MESSAGE */}
+
+          <p className="wishlist-popup-message">{wishlistDialog.message}</p>
+
+          {/* BUTTON */}
+
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => {
+              const isLogin = wishlistDialog.type === "login";
+
+              closeWishlistPopup();
+
+              if (isLogin) {
+                navigate("/Login");
+              }
+            }}
+            sx={{
+              backgroundColor: "#176b45",
+              borderRadius: "10px",
+              padding: "12px",
+              fontWeight: 700,
+              textTransform: "none",
+              fontSize: "14px",
+              boxShadow: "none",
+
+              "&:hover": {
+                backgroundColor: "#0e5134",
+                boxShadow: "none",
+              },
+            }}
+          >
+            {wishlistDialog.type === "login"
+              ? "Login Now"
+              : "Continue Shopping"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* =====================================
+          CART SNACKBAR
+      ===================================== */}
 
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000}
         onClose={(event, reason) => {
           if (reason === "clickaway") return;
-
           setSnackbarOpen(false);
         }}
         anchorOrigin={{

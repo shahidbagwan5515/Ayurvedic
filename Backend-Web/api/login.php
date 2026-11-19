@@ -5,6 +5,8 @@
 // CORS CONFIGURATION
 // ========================================
 
+header("Content-Type: application/json; charset=UTF-8");
+
 $allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
@@ -21,11 +23,6 @@ if (in_array($origin, $allowedOrigins, true)) {
 
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json; charset=UTF-8");
-
-// ========================================
-// OPTIONS REQUEST
-// ========================================
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
   http_response_code(200);
@@ -56,7 +53,7 @@ function sendResponse($success, $message, $statusCode = 200, $data = null)
 }
 
 // ========================================
-// REQUEST METHOD
+// CHECK REQUEST METHOD
 // ========================================
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
@@ -64,7 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 // ========================================
-// GET JSON DATA
+// READ JSON INPUT
 // ========================================
 
 $input = json_decode(file_get_contents("php://input"), true);
@@ -74,7 +71,7 @@ if (!is_array($input)) {
 }
 
 // ========================================
-// FORM DATA
+// GET FORM DATA
 // ========================================
 
 $email = strtolower(trim($input["email"] ?? ""));
@@ -93,7 +90,7 @@ if (!is_string($password) || $password === "") {
 }
 
 // ========================================
-// FIND USER
+// FIND CUSTOMER
 // ========================================
 
 $stmt = $conn->prepare(
@@ -105,13 +102,16 @@ $stmt = $conn->prepare(
 
 if (!$stmt) {
   error_log("Login query error: " . $conn->error);
+
   sendResponse(false, "Database query failed.", 500);
 }
 
 $stmt->bind_param("s", $email);
 
 if (!$stmt->execute()) {
+
   error_log("Login execute error: " . $stmt->error);
+
   $stmt->close();
 
   sendResponse(false, "Login failed. Please try again.", 500);
@@ -119,23 +119,49 @@ if (!$stmt->execute()) {
 
 $result = $stmt->get_result();
 
-if ($result->num_rows === 0) {
-  $stmt->close();
-  sendResponse(false, "Email or password is incorrect.", 401);
-}
-
 $user = $result->fetch_assoc();
 
 $stmt->close();
+
+if (!$user) {
+  sendResponse(false, "Email or password is incorrect.", 401);
+}
 
 // ========================================
 // VERIFY PASSWORD
 // ========================================
 
-// Compatible with your current Signup.php
-// which saves plain-text passwords.
+$storedPassword = $user["password"];
 
-if ($password !== $user["password"]) {
+$isValidPassword = password_verify($password, $storedPassword);
+
+// Support old plain-text passwords and upgrade them.
+
+if (
+  !$isValidPassword &&
+  password_get_info($storedPassword)["algo"] === null &&
+  hash_equals($storedPassword, $password)
+) {
+
+  $newHash = password_hash($password, PASSWORD_DEFAULT);
+
+  if ($newHash !== false) {
+
+    $update = $conn->prepare(
+      "UPDATE signup SET password = ? WHERE id = ?"
+    );
+
+    if ($update) {
+      $update->bind_param("si", $newHash, $user["id"]);
+      $update->execute();
+      $update->close();
+    }
+  }
+
+  $isValidPassword = true;
+}
+
+if (!$isValidPassword) {
   sendResponse(false, "Email or password is incorrect.", 401);
 }
 

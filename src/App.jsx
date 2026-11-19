@@ -23,9 +23,9 @@ import Deals, { immunityProducts } from "./components/Deals/Deals";
 import ProductCard from "./components/Product-Card/ProductCard";
 import Notification from "./components/Notification/Notification";
 import Signup from "./components/Signup/Signup";
+import Account from "./components/Wishlist/Account/Account";
 
 import { createNotification } from "./utils/notificationService";
-import Account from "./components/Wishlist/Account/Account";
 
 // =====================================
 // API CONFIGURATION
@@ -121,9 +121,11 @@ function AppLayout() {
 
   const [wishlistItems, setWishlistItems] = useState([]);
   const [orders, setOrders] = useState([]);
+
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState("");
   const [ordersRetry, setOrdersRetry] = useState(0);
+
   const [products, setProducts] = useState([]);
 
   const [wishlistLoaded, setWishlistLoaded] = useState(false);
@@ -139,7 +141,6 @@ function AppLayout() {
 
   const latestWishlist = useRef([]);
 
-  // Prevent duplicate cart requests
   const cartProcessing = useRef(new Set());
 
   // =====================================
@@ -185,7 +186,6 @@ function AppLayout() {
   }, []);
 
   // =====================================
-  // =====================================
   // FETCH CART
   // =====================================
 
@@ -206,6 +206,7 @@ function AppLayout() {
       );
 
       const formattedItems = getApiItems(result).map(formatCartItem);
+
       setCartItems(formattedItems);
     } catch (error) {
       console.error("Cart Fetch Error:", error);
@@ -223,8 +224,8 @@ function AppLayout() {
     fetchCart();
   }, [fetchCart]);
 
+  // =====================================
   // ADD PRODUCT TO CART
-  // ONLY ONE CART NOTIFICATION
   // =====================================
 
   const addToCart = useCallback(
@@ -243,7 +244,6 @@ function AppLayout() {
         return;
       }
 
-      // Prevent duplicate requests for the same product
       const processingKey = `${userId}_${productId}`;
 
       if (cartProcessing.current.has(processingKey)) {
@@ -269,16 +269,13 @@ function AppLayout() {
       try {
         setCartError("");
 
-        // Save product in database
         await cartRequest(CART_API, {
           method: "POST",
           body: JSON.stringify(payload),
         });
 
-        // Refresh cart
         await fetchCart();
 
-        // CREATE ONLY ONE NOTIFICATION
         await createNotification({
           title: "Product Added to Cart",
           message: `${payload.name} has been successfully added to your cart.`,
@@ -309,7 +306,7 @@ function AppLayout() {
         await cartRequest(CART_API, {
           method: "DELETE",
           body: JSON.stringify({
-            user_id: userId,
+            user_id: Number(userId),
             id: Number(cartRowId),
           }),
         });
@@ -338,7 +335,7 @@ function AppLayout() {
         await cartRequest(CART_API, {
           method: "PUT",
           body: JSON.stringify({
-            user_id: userId,
+            user_id: Number(userId),
             id: Number(cartRowId),
             quantity: newQuantity,
           }),
@@ -355,7 +352,50 @@ function AppLayout() {
   );
 
   // =====================================
-  // FETCH WISHLIST - CUSTOMER WISE
+  // CLEAR CART AFTER SUCCESSFUL ORDER
+  // =====================================
+
+  const handleOrderSuccess = useCallback(
+    async (orderId) => {
+      if (!userId) {
+        throw new Error("User login information is missing.");
+      }
+
+      try {
+        // Use the existing DELETE API for each cart row.
+        const itemsToDelete = [...cartItems];
+
+        await Promise.all(
+          itemsToDelete.map((item) =>
+            cartRequest(CART_API, {
+              method: "DELETE",
+              body: JSON.stringify({
+                user_id: Number(userId),
+                id: Number(item.id),
+              }),
+            }),
+          ),
+        );
+
+        // Update React state immediately.
+        setCartItems([]);
+        setCartError("");
+        setCartLoading(false);
+
+        console.log("Cart cleared after successful order:", orderId);
+      } catch (error) {
+        console.error("Cart Clear Error:", error);
+
+        await fetchCart();
+
+        throw error;
+      }
+    },
+    [userId, cartItems, cartRequest, fetchCart],
+  );
+
+  // =====================================
+  // FETCH WISHLIST
   // =====================================
 
   useEffect(() => {
@@ -363,14 +403,12 @@ function AppLayout() {
     let active = true;
 
     const fetchWishlist = async () => {
-      // Clear the previous customer's wishlist immediately.
       setWishlistItems([]);
       latestWishlist.current = [];
       setWishlistLoaded(false);
       setWishlistError("");
       setWishlistOwnerId("");
 
-      // Guests cannot fetch a customer's saved wishlist.
       if (!userId) {
         setWishlistLoaded(true);
         return;
@@ -381,7 +419,9 @@ function AppLayout() {
           `${WISHLIST_API}?user_id=${encodeURIComponent(userId)}`,
           {
             method: "GET",
-            headers: { Accept: "application/json" },
+            headers: {
+              Accept: "application/json",
+            },
             signal: controller.signal,
           },
         );
@@ -411,6 +451,7 @@ function AppLayout() {
       } catch (error) {
         if (error.name !== "AbortError" && active) {
           console.error("Wishlist Fetch Error:", error);
+
           setWishlistError(error.message || "Unable to load wishlist.");
         }
       } finally {
@@ -429,7 +470,7 @@ function AppLayout() {
   }, [userId, wishlistRetry]);
 
   // =====================================
-  // FETCH ORDER HISTORY - CUSTOMER WISE
+  // FETCH ORDER HISTORY
   // =====================================
 
   useEffect(() => {
@@ -449,26 +490,23 @@ function AppLayout() {
         setOrdersLoading(true);
 
         const url = `${ORDERS_API}?user_id=${encodeURIComponent(userId)}`;
-        console.log("Order API URL:", url);
-        console.log("Logged-in User ID:", userId);
 
         const response = await fetch(url, {
           method: "GET",
-          headers: { Accept: "application/json" },
+          headers: {
+            Accept: "application/json",
+          },
           signal: controller.signal,
         });
 
         const responseText = await response.text();
-        console.log("Order API Status:", response.status);
-        console.log("Order API Raw Response:", responseText);
 
         let result;
+
         try {
           result = JSON.parse(responseText);
         } catch {
-          throw new Error(
-            "order_history.php did not return valid JSON. Check PHP errors/output.",
-          );
+          throw new Error("order_history.php did not return valid JSON.");
         }
 
         if (!response.ok) {
@@ -491,14 +529,16 @@ function AppLayout() {
 
         setOrders(rows);
         setOrdersError("");
-        console.log("Orders Loaded Successfully:", rows);
       } catch (error) {
         if (error.name !== "AbortError" && active) {
           console.error("Order History Fetch Error:", error);
+
           setOrdersError(error.message || "Unable to load order history.");
         }
       } finally {
-        if (active) setOrdersLoading(false);
+        if (active) {
+          setOrdersLoading(false);
+        }
       }
     };
 
@@ -511,11 +551,10 @@ function AppLayout() {
   }, [userId, ordersRetry, location.pathname]);
 
   // =====================================
-  // SAVE WISHLIST - CUSTOMER WISE
+  // SAVE WISHLIST
   // =====================================
 
   useEffect(() => {
-    // Never save a guest wishlist or data belonging to another user.
     if (!userId || !wishlistLoaded) return;
     if (wishlistOwnerId !== String(userId)) return;
     if (wishlistError) return;
@@ -582,8 +621,6 @@ function AppLayout() {
     };
 
     setOrders((previous) => [newOrder, ...previous]);
-    // Add order notification only after successful
-    // database order creation in your real order API.
   };
 
   // =====================================
@@ -595,6 +632,7 @@ function AppLayout() {
     onWishlistChange: setWishlistItems,
     wishlistLoaded,
     wishlistError,
+
     onRetryWishlist: () => {
       setWishlistRetry((previous) => previous + 1);
     },
@@ -700,7 +738,7 @@ function AppLayout() {
               orders={orders}
               loading={ordersLoading}
               error={ordersError}
-              onRetry={() => setOrdersRetry((prev) => prev + 1)}
+              onRetry={() => setOrdersRetry((previous) => previous + 1)}
             />
           }
         />
@@ -733,9 +771,16 @@ function AppLayout() {
 
         <Route
           path="/Payment"
-          element={<Payment onPlaceOrder={placeOrder} />}
+          element={
+            <Payment
+              onPlaceOrder={placeOrder}
+              onOrderSuccess={handleOrderSuccess}
+            />
+          }
         />
+
         <Route path="/Account" element={<Account />} />
+
         <Route path="/Footer" element={<Footer />} />
 
         <Route

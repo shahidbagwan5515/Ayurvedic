@@ -12,7 +12,7 @@ function Signup() {
   const navigate = useNavigate();
 
   const API_URL =
-    "https://plyexpert.com/shaheedApis/Backend-web/api/signup.php";
+    "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/signup.php";
 
   const [form, setForm] = useState({
     name: "",
@@ -114,9 +114,18 @@ function Signup() {
         );
       }
 
-      // SAVE USER SESSION
-      if (result.data) {
-        localStorage.setItem("loggedInUser", JSON.stringify(result.data));
+      // SAVE NEWLY REGISTERED CUSTOMER
+      if (result.data && result.data.id) {
+        const currentUser = {
+          id: Number(result.data.id),
+          name: result.data.name,
+          email: result.data.email,
+          phone: result.data.phone,
+        };
+
+        localStorage.setItem("user", JSON.stringify(currentUser));
+        localStorage.setItem("loggedInUser", JSON.stringify(currentUser));
+        localStorage.setItem("user_id", String(currentUser.id));
 
         window.dispatchEvent(new Event("authChanged"));
       }

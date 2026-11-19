@@ -1,6 +1,14 @@
+/* ========================================
+   GLOBAL
+======================================== */
+
 * {
   box-sizing: border-box;
 }
+
+/* ========================================
+   PRODUCT SECTION
+======================================== */
 
 .prdcard-section {
   display: flex;
@@ -11,12 +19,11 @@
   overflow-y: hidden;
 
   cursor: grab;
-  scrollbar-width: thin;
-  scrollbar-color: #bdbdbd transparent;
-
   scrollbar-width: none;
+
   padding: 15px 5px;
   scroll-behavior: auto;
+
   -webkit-overflow-scrolling: touch;
 }
 
@@ -24,23 +31,8 @@
   cursor: grabbing;
 }
 
-.product-card {
-  flex: 0 0 280px;
-  min-width: 0;
-}
-
-/* Scrollbar */
 .prdcard-section::-webkit-scrollbar {
   display: none;
-}
-
-.prdcard-section::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.prdcard-section::-webkit-scrollbar-thumb {
-  background: #b7d4c2;
-  border-radius: 10px;
 }
 
 /* ========================================
@@ -99,43 +91,63 @@
   transform: scale(1.045);
 }
 
-.product-image {
-  position: relative;
-}
+/* ========================================
+   WISHLIST BUTTON
+======================================== */
 
 .product-wishlist-btn {
   position: absolute;
   top: 10px;
   right: 10px;
   z-index: 2;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+
+  width: 42px;
+  height: 42px;
+
   border: none;
   border-radius: 50%;
-  background: transparent;
+
+  background: rgba(255, 255, 255, 0.95);
   color: #777;
+
   font-size: 23px;
   cursor: pointer;
-  transition: 0.2s ease;
+
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.09);
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
-.product-wishlist-btn:hover,
+.product-wishlist-btn:hover {
+  color: #e53945;
+  transform: scale(1.08);
+}
+
 .product-wishlist-btn.active {
-  color: red;
+  color: #e53945;
+  background: #fff0f0;
 }
 
-.product-wishlist-btn.active {
-  border-color: #e53945;
+.product-wishlist-btn.active svg {
+  fill: #e53945;
 }
 
-/* Discount Badge */
+/* ========================================
+   DISCOUNT BADGE
+======================================== */
+
 .product-offer {
   position: absolute;
   top: 13px;
   left: 13px;
+
   padding: 6px 11px;
 
   border-radius: 20px;
@@ -147,37 +159,6 @@
   letter-spacing: 0.3px;
 
   box-shadow: 0 3px 8px rgba(23, 107, 69, 0.18);
-}
-
-/* Wishlist Icon */
-.product-image::after {
-
-
-  position: absolute;
-  top: 12px;
-  right: 12px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-
-  background: rgba(255, 255, 255, 0.95);
-  color: #174e39;
-
-  font-size: 20px;
-  font-weight: 500;
-
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.09);
-  transition: background 0.25s ease, color 0.25s ease;
-}
-
-.product-card:hover .product-image::after {
-  background: #176b45;
-  color: #fff;
 }
 
 /* ========================================
@@ -257,7 +238,10 @@
   text-decoration: line-through;
 }
 
-/* Quantity Controls */
+/* ========================================
+   QUANTITY CONTROLS
+======================================== */
+
 .quantity-box {
   display: flex;
   align-items: center;
@@ -284,12 +268,19 @@
   font-weight: 700;
   cursor: pointer;
 
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
-.quantity-box button:hover {
+.quantity-box button:hover:not(:disabled) {
   background: #176b45;
   color: #fff;
+}
+
+.quantity-box button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .quantity-box span {
@@ -331,16 +322,151 @@
     box-shadow 0.25s ease;
 }
 
-.buy-now-btn:hover {
+.buy-now-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   background: #0e5134;
   box-shadow: 0 7px 16px rgba(23, 107, 69, 0.2);
+}
+
+.buy-now-btn:disabled {
+  background: #a6b5ac;
+  border-color: #a6b5ac;
+  cursor: not-allowed;
 }
 
 .buyIcon-btn {
   width: 13px !important;
   height: 13px !important;
   font-size: 13px !important;
+}
+
+/* ========================================
+   WISHLIST SUCCESS POPUP
+======================================== */
+
+.wishlist-popup-icon {
+  width: 75px;
+  height: 75px;
+  margin: 10px auto 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  background: #e8f5ed;
+  color: #176b45;
+
+  animation: wishlistPop 0.4s ease;
+}
+
+.wishlist-popup-icon svg {
+  font-size: 42px;
+}
+
+.wishlist-popup-icon.removed {
+  background: #fff0f0;
+  color: #e53945;
+}
+
+.wishlist-popup-icon.login {
+  background: #fff4e5;
+  color: #e69524;
+}
+
+/* POPUP TITLE */
+
+.wishlist-popup-title {
+  margin: 0 0 12px;
+
+  color: #183b2b;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+/* POPUP PRODUCT */
+
+.wishlist-popup-product {
+  margin: 18px 0;
+  padding: 12px;
+
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+
+  background: #f6faf7;
+  border: 1px solid #e4eee7;
+  border-radius: 12px;
+}
+
+.wishlist-popup-product img {
+  width: 85px;
+  height: 85px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.wishlist-popup-product h3 {
+  margin: 10px 0 5px;
+  font-size: 15px;
+  color: #26352d;
+}
+
+.wishlist-popup-product span {
+  color: #176b45;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+/* POPUP MESSAGE */
+
+.wishlist-popup-message {
+  margin: 15px 0 20px;
+
+  color: #718078;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* POPUP ANIMATION */
+
+@keyframes wishlistPop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+
+  70% {
+    transform: scale(1.12);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ========================================
+   LOADING / ERROR / EMPTY
+======================================== */
+
+.product-loading,
+.product-error,
+.product-empty {
+  padding: 35px 15px;
+  text-align: center;
+  color: #52645a;
+  font-size: 14px;
+}
+
+.product-error button {
+  margin-top: 12px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #176b45;
+  color: white;
+  cursor: pointer;
 }
 
 /* ========================================
@@ -401,12 +527,12 @@
     font-size: 9px;
   }
 
-  .product-image::after {
-    top: 9px;
-    right: 9px;
-    width: 30px;
-    height: 30px;
-    font-size: 17px;
+  .product-wishlist-btn {
+    top: 8px;
+    right: 8px;
+    width: 35px;
+    height: 35px;
+    font-size: 19px;
   }
 
   .product-content {
@@ -464,6 +590,10 @@
     height: 38px;
     border-radius: 7px;
     font-size: 11px;
+  }
+
+  .wishlist-popup-title {
+    font-size: 21px;
   }
 }
 

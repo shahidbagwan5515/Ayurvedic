@@ -1,8 +1,11 @@
+
 <?php
 
 // ========================================
 // CORS CONFIGURATION
 // ========================================
+
+header("Content-Type: application/json; charset=UTF-8");
 
 $allowedOrigins = [
   "http://localhost:5173",
@@ -20,7 +23,6 @@ if (in_array($origin, $allowedOrigins, true)) {
 
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json; charset=UTF-8");
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
   http_response_code(200);
@@ -63,7 +65,7 @@ if (!is_array($input)) {
 $method = $_SERVER["REQUEST_METHOD"];
 
 // ========================================
-// GET CUSTOMER PROFILE (READ)
+// GET ACCOUNT DETAILS
 // ========================================
 
 if ($method === "GET") {
@@ -75,7 +77,10 @@ if ($method === "GET") {
   }
 
   $stmt = $conn->prepare(
-    "SELECT id, name, email, phone FROM signup WHERE id = ? LIMIT 1"
+    "SELECT id, name, email, phone
+         FROM signup
+         WHERE id = ?
+         LIMIT 1"
   );
 
   if (!$stmt) {
@@ -94,11 +99,16 @@ if ($method === "GET") {
     sendResponse(false, "Customer account not found.", 404);
   }
 
-  sendResponse(true, "Customer details fetched successfully.", 200, $user);
+  sendResponse(
+    true,
+    "Customer details fetched successfully.",
+    200,
+    $user
+  );
 }
 
 // ========================================
-// CREATE CUSTOMER ACCOUNT (SIGNUP)
+// CUSTOMER SIGNUP
 // ========================================
 
 if ($method === "POST") {
@@ -107,6 +117,8 @@ if ($method === "POST") {
   $email = strtolower(trim($input["email"] ?? ""));
   $phone = trim($input["phone"] ?? "");
   $password = $input["password"] ?? "";
+
+  // Validation
 
   if ($name === "") {
     sendResponse(false, "Please enter your full name.", 422);
@@ -127,7 +139,9 @@ if ($method === "POST") {
   // Check duplicate email or phone
 
   $check = $conn->prepare(
-    "SELECT id FROM signup WHERE email = ? OR phone = ? LIMIT 1"
+    "SELECT id FROM signup
+         WHERE email = ? OR phone = ?
+         LIMIT 1"
   );
 
   if (!$check) {
@@ -140,13 +154,25 @@ if ($method === "POST") {
 
   if ($check->num_rows > 0) {
     $check->close();
-    sendResponse(false, "Email or mobile number already registered.", 409);
+
+    sendResponse(
+      false,
+      "Email or mobile number already registered.",
+      409
+    );
   }
 
   $check->close();
 
-  // Existing password storage behavior retained for compatibility.
-  // For production, migrate to password_hash() and password_verify().
+  // Secure password hashing
+
+  $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+  if ($hashedPassword === false) {
+    sendResponse(false, "Password processing failed.", 500);
+  }
+
+  // Insert customer
 
   $stmt = $conn->prepare(
     "INSERT INTO signup (name, email, phone, password)
@@ -157,31 +183,42 @@ if ($method === "POST") {
     sendResponse(false, "Database query failed.", 500);
   }
 
-  $stmt->bind_param("ssss", $name, $email, $phone, $password);
+  $stmt->bind_param(
+    "ssss",
+    $name,
+    $email,
+    $phone,
+    $hashedPassword
+  );
 
   if ($stmt->execute()) {
 
     $userId = $conn->insert_id;
+
     $stmt->close();
 
-    sendResponse(true, "Account created successfully!", 201, [
-      "id" => $userId,
-      "name" => $name,
-      "email" => $email,
-      "phone" => $phone
-    ]);
+    sendResponse(
+      true,
+      "Account created successfully!",
+      201,
+      [
+        "id" => $userId,
+        "name" => $name,
+        "email" => $email,
+        "phone" => $phone
+      ]
+    );
   }
 
-  $error = $stmt->error;
-  $stmt->close();
+  error_log("Signup error: " . $stmt->error);
 
-  error_log("Signup error: " . $error);
+  $stmt->close();
 
   sendResponse(false, "Registration failed. Please try again.", 500);
 }
 
 // ========================================
-// UPDATE CUSTOMER PROFILE
+// UPDATE ACCOUNT PROFILE
 // ========================================
 
 if ($method === "PUT") {
@@ -214,22 +251,28 @@ if ($method === "PUT") {
     "SELECT id FROM signup WHERE id = ? LIMIT 1"
   );
 
+  if (!$checkUser) {
+    sendResponse(false, "Database query failed.", 500);
+  }
+
   $checkUser->bind_param("i", $id);
   $checkUser->execute();
   $checkUser->store_result();
 
   if ($checkUser->num_rows === 0) {
     $checkUser->close();
+
     sendResponse(false, "Customer account not found.", 404);
   }
 
   $checkUser->close();
 
-  // Check duplicate email or phone excluding current customer
+  // Check duplicate email or phone
 
   $check = $conn->prepare(
     "SELECT id FROM signup
-         WHERE (email = ? OR phone = ?) AND id != ?
+         WHERE (email = ? OR phone = ?)
+         AND id != ?
          LIMIT 1"
   );
 
@@ -243,7 +286,12 @@ if ($method === "PUT") {
 
   if ($check->num_rows > 0) {
     $check->close();
-    sendResponse(false, "Email or mobile number already used.", 409);
+
+    sendResponse(
+      false,
+      "Email or mobile number already used.",
+      409
+    );
   }
 
   $check->close();
@@ -266,13 +314,20 @@ if ($method === "PUT") {
 
     $stmt->close();
 
-    sendResponse(true, "Profile updated successfully!", 200, [
-      "id" => $id,
-      "name" => $name,
-      "email" => $email,
-      "phone" => $phone
-    ]);
+    sendResponse(
+      true,
+      "Profile updated successfully!",
+      200,
+      [
+        "id" => $id,
+        "name" => $name,
+        "email" => $email,
+        "phone" => $phone
+      ]
+    );
   }
+
+  error_log("Profile update error: " . $stmt->error);
 
   $stmt->close();
 
@@ -280,7 +335,7 @@ if ($method === "PUT") {
 }
 
 // ========================================
-// DELETE CUSTOMER ACCOUNT
+// DELETE ACCOUNT
 // ========================================
 
 if ($method === "DELETE") {
@@ -314,10 +369,9 @@ if ($method === "DELETE") {
     sendResponse(true, "Account deleted successfully!", 200);
   }
 
-  $error = $stmt->error;
-  $stmt->close();
+  error_log("Delete account error: " . $stmt->error);
 
-  error_log("Delete account error: " . $error);
+  $stmt->close();
 
   sendResponse(false, "Unable to delete account.", 500);
 }
@@ -327,3 +381,5 @@ if ($method === "DELETE") {
 // ========================================
 
 sendResponse(false, "Invalid request method.", 405);
+
+?>
