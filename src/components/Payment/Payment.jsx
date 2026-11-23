@@ -4,7 +4,11 @@ import "./Payment.css";
 import { createNotification } from "../../utils/notificationService";
 
 const PAYMENT_API =
+<<<<<<< HEAD
   "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/payment.php";
+=======
+  "http://localhost/Admin-Panel/dashboard/Backend/api/payment.php";
+>>>>>>> 5448d81 (all code update)
 
 // =====================================
 // GET LOGGED IN USER ID

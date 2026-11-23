@@ -31,6 +31,7 @@ import { createNotification } from "./utils/notificationService";
 // API CONFIGURATION
 // =====================================
 
+<<<<<<< HEAD
 const CART_API =
   "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/cart.php";
 
@@ -40,6 +41,15 @@ const WISHLIST_API =
 const ORDERS_API =
   "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/order_history.php";
 
+=======
+const CART_API = "http://localhost/Admin-Panel/dashboard/Backend/api/cart.php";
+
+const WISHLIST_API =
+  "http://localhost/Admin-Panel/dashboard/Backend/api/wishlist.php";
+
+const ORDERS_API =
+  "http://localhost/Admin-Panel/dashboard/Backend/api/CustomerOrder_history.php";
+>>>>>>> 5448d81 (all code update)
 // =====================================
 // GET LOGGED-IN USER ID
 // =====================================

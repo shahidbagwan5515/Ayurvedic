@@ -12,7 +12,11 @@ function Signup() {
   const navigate = useNavigate();
 
   const API_URL =
+<<<<<<< HEAD
     "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/signup.php";
+=======
+    "http://localhost/Admin-Panel/dashboard/Backend/api/signup.php";
+>>>>>>> 5448d81 (all code update)
 
   const [form, setForm] = useState({
     name: "",

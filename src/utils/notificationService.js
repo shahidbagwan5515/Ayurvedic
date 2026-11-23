@@ -1,6 +1,5 @@
 const NOTIFICATION_API =
-  "http://localhost/Ayurvedic/ayurvedic-app/Backend-Web/api/create_notification.php";
-
+  "http://localhost/Admin-Panel/Dashboard/Backend/api/create_notification.php";
 // =====================================
 // GET CURRENT LOGGED-IN CUSTOMER ID
 // =====================================

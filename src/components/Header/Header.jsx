@@ -43,7 +43,11 @@ import Companylog2 from "../../assets/navLog.png";
 // =====================================
 
 const NOTIFICATION_API =
+<<<<<<< HEAD
   "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/notifications.php";
+=======
+  "http://localhost/Admin-Panel/dashboard/Backend/api/Customer_Notifications.php";
+>>>>>>> 5448d81 (all code update)
 
 // =====================================
 // GET LOGGED-IN USER

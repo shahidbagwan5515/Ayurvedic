@@ -16,8 +16,12 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 // =====================================
 
 const ACCOUNT_API =
+<<<<<<< HEAD
   "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/signup.php";
 
+=======
+  "http://localhost/Admin-Panel/dashboard/Backend/api/signup.php";
+>>>>>>> 5448d81 (all code update)
 // =====================================
 // GET STORED USER
 // =====================================
