@@ -5,11 +5,7 @@ import CardEmp from "../CardEmp";
 import { createNotification } from "../../../utils/notificationService";
 
 const ORDER_API =
-<<<<<<< HEAD
-  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/place_order.php";
-=======
-  "http://localhost/Admin-Panel/dashboard/Backend/api/place_order.php";
->>>>>>> 5448d81 (all code update)
+  "https://akshayurja.in/ExpensesApp/ShaheedApis/place_order.php";
 
 // =====================================
 // GET LOGGED IN USER ID

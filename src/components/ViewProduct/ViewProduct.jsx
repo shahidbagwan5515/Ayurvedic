@@ -24,11 +24,9 @@ import { createNotification } from "../../utils/notificationService";
 // API CONFIGURATION
 // =====================================
 
-const API_URL =
-  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend/api/product.php";
+const API_URL = "https://akshayurja.in/ExpensesApp/ShaheedApis/product.php";
 
-const STOCK_API_URL =
-  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend/api/stock.php";
+const STOCK_API_URL = "https://akshayurja.in/ExpensesApp/ShaheedApis/stock.php";
 
 const IMAGE_BASE_URL = "http://localhost";
 

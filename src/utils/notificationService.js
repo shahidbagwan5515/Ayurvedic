@@ -1,7 +1,8 @@
 const NOTIFICATION_API =
-  "http://localhost/Admin-Panel/Dashboard/Backend/api/create_notification.php";
+  "https://akshayurja.in/ExpensesApp/ShaheedApis/Customer_Notifications.php";
+
 // =====================================
-// GET CURRENT LOGGED-IN CUSTOMER ID
+// GET LOGGED-IN USER ID
 // =====================================
 
 export const getNotificationUserId = () => {
@@ -12,15 +13,14 @@ export const getNotificationUserId = () => {
       localStorage.getItem("loggedInUser") || "null",
     );
 
-    // Prefer current user object; fallback to stored ID
     const id = Number(
-      user?.id ||
+      localStorage.getItem("user_id") ||
+        user?.id ||
         user?.user_id ||
         user?.userId ||
         loggedInUser?.id ||
         loggedInUser?.user_id ||
         loggedInUser?.userId ||
-        localStorage.getItem("user_id") ||
         0,
     );
 
@@ -39,32 +39,37 @@ export const createNotification = async ({
   title,
   message,
   type = "general",
-}) => {
+} = {}) => {
   const userId = getNotificationUserId();
 
   if (!userId) {
-    console.warn("Notification skipped: Customer is not logged in.");
+    console.warn("Notification skipped: User not logged in.");
     return false;
   }
 
-  if (!title || !message) {
-    console.error("Notification title and message are required.");
+  if (!title?.trim() || !message?.trim()) {
+    console.error("Notification title and message required.");
     return false;
   }
 
   try {
+    const payload = {
+      action: "create",
+      user_id: Number(userId),
+      title: title.trim(),
+      message: message.trim(),
+      type,
+    };
+
+    console.log("Notification Request:", payload);
+
     const response = await fetch(NOTIFICATION_API, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({
-        user_id: userId,
-        title,
-        message,
-        type,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const raw = await response.text();
@@ -74,21 +79,23 @@ export const createNotification = async ({
     try {
       result = JSON.parse(raw);
     } catch {
-      throw new Error("Invalid API response: " + raw.substring(0, 300));
+      throw new Error("Invalid notification API response.");
     }
 
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || "Notification creation failed.");
+    console.log("Notification API Result:", result);
+
+    if (!response.ok || result.success !== true) {
+      throw new Error(result.message || "Unable to create notification.");
     }
 
-    // Update notification components
     window.dispatchEvent(new Event("notificationUpdated"));
 
-    console.log("Notification successfully created for customer:", userId);
+    console.log("Notification created successfully:", result.data?.id);
 
     return true;
   } catch (error) {
     console.error("Create Notification Error:", error);
+
     return false;
   }
 };

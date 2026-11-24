@@ -9,12 +9,7 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import "./Login.css";
 
 const API_URL =
-<<<<<<< HEAD
-  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/login.php";
-=======
-  "http://localhost/Admin-Panel/dashboard/Backend/api/CustomerLogin.php";
->>>>>>> 5448d81 (all code update)
-
+  "http://localhost/Admin-Panel/Dashboard/ShaheedApis/CustomerLogin.php";
 function Login({ open, onClose }) {
   const navigate = useNavigate();
 

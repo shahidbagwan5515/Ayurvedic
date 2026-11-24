@@ -3,12 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Payment.css";
 import { createNotification } from "../../utils/notificationService";
 
-const PAYMENT_API =
-<<<<<<< HEAD
-  "https://solcarelifesciences.com/demo/Ajit_lab_apis/Backend-Web/api/payment.php";
-=======
-  "http://localhost/Admin-Panel/dashboard/Backend/api/payment.php";
->>>>>>> 5448d81 (all code update)
+const PAYMENT_API = "https://akshayurja.in/ExpensesApp/ShaheedApis/payment.php";
 
 // =====================================
 // GET LOGGED IN USER ID
